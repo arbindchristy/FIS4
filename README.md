@@ -9,6 +9,61 @@ user confirmation on 2026-11-17. NMCM remains in the serviceability denominator.
 See [decision FIS-001](docs/DECISIONS.md) and [project instructions](AGENTS.md).
 Unauthorized formula changes are prohibited.
 
+## Engineering harness (Phase 01.6)
+
+From the repository root, run the following in PowerShell. Use the explicit
+interpreter form when automatic selection is inappropriate:
+
+```powershell
+& .\scripts\verify.ps1
+& .\scripts\verify.ps1 -PythonExecutable 'C:\AI\Projects\fleet_cpi_suite\venv\Scripts\python.exe'
+& .\scripts\security_check.ps1
+```
+
+If the local policy blocks unsigned scripts, an allowed process-scoped invocation
+is `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify.ps1`
+(subject to organizational policy). It does not change machine execution policy.
+Both scripts run locally without installation or network access.
+
+`verify.ps1` tries `FIS4_PYTHON`, project `.venv`, project `venv`, the audited
+sibling legacy virtual environment, and `python.exe` on PATH, in that order.
+Each candidate must import unittest, pandas, and NumPy. An explicit executable
+never silently falls back. All `test*.py` unittest tests are discovered from
+`tests`, and bytecode writes are disabled. The script reports the actual Python,
+test count, failures, errors, skips, and result without rewriting `TEST_REPORT.md`.
+Exit codes: 0 = tests pass; 1 = failed tests or zero tests; 2 = setup/runner error.
+Skipped tests are reported and require release review; they are not automatically
+test failures. Existing legacy parity tests still require the documented local
+read-only references and their pinned hashes.
+
+`security_check.ps1` inventories Git-tracked index entries and checks both index
+content and current tracked working files. Confirmed prohibited paths/types,
+unmerged entries, and links/submodules fail with exit 1. Obvious credential/token
+patterns, private network/endpoint patterns, oversized files (over 1 MiB), binary
+content, and missing working files are manual-review findings; only locations
+and rule names are printed. Manual-review-only scans return 0 with **REVIEW
+REQUIRED**, not a clean PASS. Exit 2 means incomplete inspection or an empty
+index. A scan cannot establish that data is synthetic or a token is live;
+human review and the release gates remain necessary.
+
+Untracked files are intentionally outside the normal security scan. Review them
+explicitly before staging, then rerun the scan after approved staging. Pattern
+scans are not a full secret detector and do not inspect history or prove the
+absence of operational information. Existing approved local reference paths
+remain documented in the historical publication review.
+
+Harness regression checks (separate from the unchanged 28 readiness tests):
+
+```powershell
+& .\tests\test_engineering_harness.ps1 -PythonExecutable 'C:\AI\Projects\fleet_cpi_suite\venv\Scripts\python.exe'
+```
+
+These checks create a disposable Git fixture under ignored `.harness-test-tmp`,
+exercise synthetic failure/security cases, and remove the fixture afterward.
+Read [project state](docs/PROJECT_STATE.md), [task backlog](docs/TASKS.md), and
+[release gates](docs/RELEASE_GATES.md) for current status. Formula authority
+continues to be [FIS-001](docs/DECISIONS.md); the harness does not change formulas.
+
 ## Run the verification
 
 From PowerShell in `C:\AI\Projects\FIS4`:

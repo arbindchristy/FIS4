@@ -30,3 +30,18 @@ do not weaken tests to permit a formula change.
   without a separate explicit instruction authorizing that scope.
 - Do not install packages or begin FastAPI, React, or packaging work without
   a separate instruction.
+
+## End-of-task engineering checks
+
+Run `scripts/verify.ps1` and `scripts/security_check.ps1` at the end of future
+tasks. Use `-PythonExecutable` when interpreter selection must be explicit.
+Record the actual commands, exit codes, test count/results, and any unresolved
+manual security findings in the task report. A nonzero check exit code blocks
+completion; manual-review findings require disposition before publication.
+The security check covers tracked index and working-tree content; untracked
+files require explicit review before staging, followed by another security check.
+
+Keep `docs/PROJECT_STATE.md`, `docs/TASKS.md`, and `docs/RELEASE_GATES.md` current.
+Reuse `docs/DECISIONS.md` for decisions and `TEST_REPORT.md` for Phase 01 evidence;
+do not create competing governance files or rewrite historical test evidence.
+Do not commit or push without the approval required by the active task.

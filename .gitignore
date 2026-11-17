@@ -68,3 +68,4 @@ logs/
 !/data/synthetic_readiness.csv
 operational_data/
 local_data/
+/.harness-test-tmp/

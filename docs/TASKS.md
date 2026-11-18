@@ -9,8 +9,13 @@
 | Phase 01.6 tracked-file security script | Complete; verified | 11 tracked files and isolated 17-file proposed scan: no violations or manual findings |
 | Harness failure-path regression checks | Complete | `tests/test_engineering_harness.ps1`: 11 checks passed |
 | State, backlog, release gates, end-of-task instructions | Complete | These documents, README, AGENTS; actual evidence in PROJECT_STATE |
-| Phase 01.6 commit | Awaiting explicit user approval after verification | No staging/commit/push automatically |
-| API phase | Not started; separate instruction required | No FastAPI work in Phase 01.6 |
+| Phase 01.6 publication | Complete; stale status corrected | Local verified commit/refs: `bb3abfd036c2c7c88a03abf7e9cee628dd638f1c`; no live remote recheck |
+| Phase 02A synthetic FastAPI | Implemented; acceptance checks passed | Health, fleet, command, distribution; 16 API tests; formulas unchanged |
+| Dedicated environment and dependency pins | Complete | FIS4 `.venv`, CPython 3.13.7; 22 exact pins; pip check exit 0 |
+| API harness and portable boundary | Complete | 44 full / 39 portable tests; original 28 tests and 11 harness scenarios preserved; 12 checks pass |
+| Phase 02A staged review | Complete; checks passed | 11 reviewed files staged; 44 full / 39 portable tests, 12 harness checks, 22-file index/working-tree security scan; all exit 0 |
+| Phase 02A publication | Pending explicit approval | Staging authorized; no commit, push or external network operation performed |
+| Production API / data integration | Deferred; separate instruction required | Synthetic local acceptance does not authorize real data, SQL or ML |
 | React phase | Not started; separate instruction required | No UI work in Phase 01.6 |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 

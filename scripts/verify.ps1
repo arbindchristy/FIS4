@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param([Alias('PythonPath')][string]$PythonExecutable)
+param(
+    [Alias('PythonPath')][string]$PythonExecutable,
+    [ValidateSet('All', 'Portable')][string]$TestMode = 'All'
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -33,7 +36,7 @@ function Invoke-PythonCode([string]$Executable, [string]$Code) {
 }
 
 try {
-    $probe = "import sys, json, unittest, pandas, numpy; print(json.dumps({'executable': sys.executable}))"
+    $probe = "import sys, json, unittest, pandas, numpy, fastapi, httpx, uvicorn; print(json.dumps({'executable': sys.executable}))"
     $explicit = $PSBoundParameters.ContainsKey('PythonExecutable')
     if ($explicit -and [string]::IsNullOrWhiteSpace($PythonExecutable)) {
         throw 'The explicitly supplied Python executable is empty.'
@@ -44,8 +47,6 @@ try {
         if ($env:FIS4_PYTHON) { $candidates += $env:FIS4_PYTHON }
         $candidates += Join-Path $projectRoot '.venv\Scripts\python.exe'
         $candidates += Join-Path $projectRoot 'venv\Scripts\python.exe'
-        # Reuse the audited laptop environment; do not copy or modify it.
-        $candidates += Join-Path (Split-Path -Parent $projectRoot) 'fleet_cpi_suite\venv\Scripts\python.exe'
         $command = Get-Command python.exe -CommandType Application -ErrorAction SilentlyContinue
         if ($command) { $candidates += $command.Source }
     }
@@ -59,11 +60,11 @@ try {
             $selected = $identity.executable
             break
         } catch {
-            if ($explicit) { throw 'Explicit Python is unavailable or cannot import unittest, pandas, and numpy.' }
+            if ($explicit) { throw 'Explicit Python is unavailable or cannot import the FIS4 API/test dependencies.' }
             Write-Output 'Skipping an unavailable or incompatible Python candidate.'
         }
     }
-    if (-not $selected) { throw 'No usable Python found. Supply -PythonExecutable with an existing pandas/numpy environment.' }
+    if (-not $selected) { throw 'No usable Python found. Create the project .venv using requirements.txt or supply -PythonExecutable.' }
     Write-Output "Python executable: $selected"
     Write-Output "Test directory: $(Join-Path $projectRoot 'tests')"
     $testCode = @'
@@ -77,6 +78,12 @@ root = Path.cwd()
 sys.path.insert(0, str(root))
 try:
     suite = unittest.defaultTestLoader.discover(str(root / 'tests'), pattern='test*.py')
+    selector = root / 'tests' / 'suite_selection.py'
+    if selector.is_file():
+        from suite_selection import select
+        suite, portable, external = select(suite, '__TEST_MODE__')
+        print(f'Test mode: __TEST_MODE__; Portable available: {portable}; External-reference available: {external}')
+        print(f'External-reference excluded: {external if "__TEST_MODE__" == "Portable" else 0}')
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     passed = result.wasSuccessful() and result.testsRun > 0
     print('FIS4_TEST_RESULT=' + json.dumps({
@@ -88,7 +95,9 @@ except Exception as error:
     print('Verification could not complete: ' + type(error).__name__, file=sys.stderr)
     sys.exit(2)
 '@
+    $testCode = $testCode.Replace('__TEST_MODE__', $TestMode)
     $result = Invoke-PythonCode $selected $testCode
+    if ($result.Output) { Write-Output $result.Output.TrimEnd() }
     if ($result.ErrorOutput) { Write-Output $result.ErrorOutput.TrimEnd() }
     $summaryLine = @($result.Output -split '\r?\n' | Where-Object { $_.StartsWith('FIS4_TEST_RESULT=') })
     if ($summaryLine.Count -ne 1) { throw 'Python did not return a valid test summary.' }

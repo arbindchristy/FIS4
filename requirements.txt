@@ -1,0 +1,24 @@
+# CPython 3.13.7 x64 / Windows; runtime and contract-test dependency closure.
+# Exact installed versions verified for Phase 02A; pip bootstrap is separate.
+annotated-doc==0.0.7
+annotated-types==0.8.0
+anyio==4.16.0
+certifi==2026.10.23
+click==8.5.1
+fastapi==0.164.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+numpy==2.3.4
+opentelemetry-api==1.45.2
+pandas==2.3.3
+pydantic==2.14.3
+pydantic_core==2.50.4
+python-dateutil==4.0.0
+pytz==2026.6
+starlette==1.10.0
+typing-inspection==0.4.5
+typing_extensions==4.16.0
+tzdata==2026.6
+uvicorn==0.54.0

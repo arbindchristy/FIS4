@@ -1,4 +1,88 @@
-# FIS v4 Phase 01 — Legacy readiness baseline
+# FIS v4 — Phase 02A synthetic API
+
+Phase 02A adds a local, read-only FastAPI backend using only the approved
+fictional fixture. SQL, ML, React, operational data, and offline packaging remain
+out of scope. `readiness.py` and FIS-001 are unchanged. Phase 01.6 was published
+as `bb3abfd036c2c7c88a03abf7e9cee628dd638f1c`; see the locally verified
+publication correction and current acceptance evidence in [project state](docs/PROJECT_STATE.md).
+
+## Phase 02A setup and use
+
+Validated on Windows, CPython 3.13.7 x64. Create a dedicated environment from
+the repository root; no legacy environment is used or modified:
+
+```powershell
+C:\Python313\python.exe -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -B -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+The exact runtime and test dependency closure is pinned in `requirements.txt`.
+FastAPI/Starlette/Pydantic provide routing, validation and schemas; Uvicorn
+provides ASGI serving; HTTPX/httpcore provide in-process contract testing;
+pandas/NumPy provide the protected calculation baseline. Other pins are their
+resolved dependencies (including FastAPI's OpenTelemetry API dependency; no
+exporter is configured). pip 25.2 bootstraps this environment and is not an app
+dependency. These pins establish the tested Windows environment, not an offline
+bundle or a guarantee for other Python/platform versions.
+
+| GET endpoint | Response |
+|---|---|
+| `/health` | Liveness only: `status: ok`, `source: synthetic`; does not read data |
+| `/api/v1/readiness/fleet` | Selected day's fleet metrics |
+| `/api/v1/readiness/commands` | Selected day's command metrics, sorted by command |
+| `/api/v1/status-distribution` | Counts and percentages for all six canonical statuses, including zeros |
+
+Aggregate routes accept optional `date=YYYY-MM-DD` and `command=A` query
+parameters. Date defaults to the latest fixture snapshot, **2026-01-03**, rather
+than wall-clock today. Commands are case-sensitive, 1–32 uppercase letters,
+digits, underscores or hyphens. Unknown query parameters, invalid dates and
+invalid command syntax return 422; absent dates/commands or empty snapshots
+return 404. Internal failures return a generic 500 without exception details.
+Errors use `{"detail": "..."}`. OpenAPI is at `/openapi.json`, interactive
+documentation at `/docs` (its browser assets use a CDN; offline docs are deferred).
+
+All aggregate responses include `source: synthetic`, selected `date` and nullable
+`command`. Fleet responses nest `metrics`; command responses contain `commands`.
+Counts use baseline names (`total_tails`, `fmc_tails`, `pmc_tails`, `nmcm_tails`,
+`nmcs_tails`, `depot_tails`); percentages use `svc_pct` and `avail_pct`, with full
+float precision. Distribution separates PMCM and PMCS; each status has `status`,
+`count`, `pct`, with unknown statuses appended if present. No raw tail records,
+uploads, arbitrary source paths, authentication, or write endpoints are provided.
+This acceptance gate covers local synthetic use; production deployment is deferred.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe -TestMode Portable
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\security_check.ps1
+```
+
+Full mode runs the original **28 readiness tests plus 16 API tests**. Portable
+mode runs **23 readiness plus 16 API tests**, excluding five explicitly named
+external-reference tests via `tests/suite_selection.py`. These are all four
+`LegacyParityTests` methods and
+`MetricTests.test_true_null_commands_do_not_reconcile_and_match_legacy`.
+Portable mode never loads legacy source files; exclusions are reported separately
+from skips. Full mode requires the existing hash-pinned external references and
+fails if they are unavailable or changed. Direct unittest discovery remains full
+mode. Harness regression preserves its 11 original scenarios and adds portable
+selection for **12 checks** total.
+
+Automatic interpreter selection now checks `FIS4_PYTHON`, project `.venv`, project
+`venv`, then PATH. Candidates must import the API/test dependencies as well as
+pandas and NumPy. The sibling legacy environment fallback has been removed.
+The earlier instructions below describe historical Phase 01/01.6 behavior;
+use the Phase 02A commands above for current verification. Do not run the report
+generator to replace the preserved Phase 01 `TEST_REPORT.md`.
+
+Known warnings: the inherited pandas date-inference warning is retained to
+preserve baseline parsing. Starlette 1.10.0 deprecates its HTTPX test adapter;
+HTTPX 0.28.1 remains functional in all 16 contract tests. Migration to the new
+adapter is deferred; no warnings are suppressed.
+
+## Historical Phase 01 baseline
 
 This phase isolates readiness calculations before any API, UI, ML, or release work.
 All data in `data/synthetic_readiness.csv` is newly authored fictional test data.

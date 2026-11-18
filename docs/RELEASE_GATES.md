@@ -30,7 +30,31 @@ They do not create a second business-rule or approval authority.
 
 Acceptance requires working scripts on the existing interpreter, all 28
 readiness tests passing, meaningful failure/redaction checks, unchanged protected
-baseline artifacts, and recorded actual results/diff. The current remote baseline
-is `a57936a8fff7e0502bceef008ea609fe4aef7379`; Phase 01.6 changes are not part of
-that published commit. Commit approval is a separate pending gate, and push
-requires its own authorization in the active task.
+baseline artifacts, and recorded actual results/diff. Phase 01.6 publication is
+recorded in locally verified `bb3abfd036c2c7c88a03abf7e9cee628dd638f1c`, matching
+local HEAD, main and cached origin/main at the start of Phase 02A. No live remote
+recheck occurred. This supersedes the old awaiting-publication status.
+
+## Phase 02A acceptance boundary
+
+| Acceptance requirement | Evidence |
+|---|---|
+| Synthetic source only | Fixed fictional fixture; no source-path/upload API; local aggregate GET endpoints |
+| Formula integrity | Unchanged readiness.py and original 28 tests; API known answers and zero guards pass |
+| Dedicated dependencies | FIS4 .venv, Python 3.13.7; 22 exact pins; pip check exits 0 |
+| API contracts | 16 tests pass: schemas, known answers, reconciliation, validation, missing selections, safe internal errors |
+| Full verification | 44 tests pass, zero failures/errors/skips; external requirements explicit |
+| Portable verification | 39 tests pass, five external tests excluded; also passes with legacy loader blocked |
+| Harness regression | Original 11 scenarios preserved; 12 total checks pass |
+| Real HTTP | Five Uvicorn localhost routes pass; server stopped |
+| Security and new files | 11 reviewed files staged by explicit authorization; post-staging scan covers 22 files with zero violations/manual findings; evidence in PROJECT_STATE |
+| Scope and stop | SQL, ML, React, real data, offline packaging deferred; no commit or push without approval |
+
+Acceptance covers local synthetic behavior. Production and offline deployment
+are deferred. pandas date inference and the Starlette HTTPX adapter deprecation
+are reviewed, non-blocking warnings documented in PROJECT_STATE.
+
+Staged-review gate passed on 2026-11-18: 44 full tests, 39 portable tests and
+12 harness checks passed, with no failures/errors/skips; security exited 0.
+Protected files match the Phase 01 baseline. Commit and push remain separate
+pending approval gates. No live remote or vulnerability-database query occurred.

@@ -58,3 +58,31 @@ Staged-review gate passed on 2026-11-18: 44 full tests, 39 portable tests and
 12 harness checks passed, with no failures/errors/skips; security exited 0.
 Protected files match the Phase 01 baseline. Commit and push remain separate
 pending approval gates. No live remote or vulnerability-database query occurred.
+
+## Phase 02B mocked-provider acceptance boundary
+
+| Gate | Evidence / disposition |
+|---|---|
+| Formula integrity | readiness.py, original 28 readiness tests, 16 API tests, fixture and FIS-001 unchanged |
+| Provider selection | Default synthetic; explicit validated SQL configuration and separate credentials; invalid modes fail; no discovery or fallback |
+| SQL query safety | One allowlisted literal SELECT; bound TOP value; read-only intent; no free-form identifiers or queries |
+| Resource bounds | Finite connection/query timeouts, bounded batches/rows, span and projected snapshot caps; overflow rejects whole load |
+| Source contract | README documents required event history and unmapped fields; named maintenance view not assumed historical or queried |
+| Mocked verification | 79 full / 74 portable tests pass, retaining original 44/39; 35 provider tests; 12 harness checks; no failures/errors/skips |
+| Security | Proposed and actual post-staging scans cover 26 files; exit 0, zero violations; all 6 source-expression leads explicitly dispositioned in PROJECT_STATE |
+| Dependency approval | User approved exact pymssql==2.3.3 installation; native import/signature and FreeTDS v1.4.26 verified; pip check passes; no connection opened |
+| Localhost synthetic demonstration | User reported successful Phase 02B synthetic API demonstration on 2026-11-19; no actual SQL Server acceptance implied |
+| Publication | 11 reviewed files staged and post-staging security checked; commit/push/merge remain pending explicit approval |
+
+Passing mocks establishes adapter/API behavior only. It does not accept real SQL
+Server 2019 integration, prove the source view exists or contains history, or
+authorize actual database access. Real acceptance requires approved source mapping
+and completeness, secret injection, SELECT-only permissions, TLS/certificate trust,
+native driver/server behavior, consistent reads, concurrency, cancellation and load
+evidence. The read-only connection hint cannot replace database authorization.
+
+Phase 02B review gate passed on 2026-11-19: fresh 79 full / 74 portable tests,
+12 harness checks and security scans exited 0. All tests have zero failures,
+errors and skips. The successful localhost synthetic demonstration is recorded
+as user-reported evidence; actual SQL Server testing remains unperformed.
+Staging approval does not authorize committing, pushing or merging.

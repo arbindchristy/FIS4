@@ -1,4 +1,141 @@
-# FIS v4 — Phase 02A synthetic API
+# FIS v4 — Phase 02B event providers
+
+## Phase 02B providers (mocked SQL acceptance only)
+
+The current branch adds an explicit event-provider boundary. The default app
+remains synthetic: `python -B -m uvicorn api.main:app --host 127.0.0.1 --port 8000`.
+It does not discover environment variables, local configuration files, credentials
+or databases. No live SQL connection/query is authorized by this phase.
+
+`api/providers.py` defines `DataProvider.source` and `load_events()`. Both modes
+feed the unchanged `coalesce_columns` and `build_tail_daily_snapshot` functions
+before the readiness metrics. The synthetic provider retains the same fixed CSV,
+text-tail loading and invalid-date behavior. The SQL provider validates records
+strictly before normalization; invalid SQL data fails the entire request rather
+than silently dropping records or repairing numeric tail identifiers.
+
+### Explicit configuration and secrets
+
+`parse_config(mapping)` validates mode and settings, defaults to synthetic, rejects
+unknown fields/modes/identifiers, and emits a generic configuration error without
+raw inputs. A nonsecret SQL template is in `config/sql-provider.example.json`;
+its host uses the reserved `.invalid` domain and is never loaded automatically.
+Credentials are intentionally absent. An authorized deployment composition root
+would explicitly pass `SqlCredentials` from its approved secret mechanism:
+
+```python
+from api.config import parse_config
+from api.main import create_app
+
+# config_values: explicitly supplied nonsecret configuration mapping.
+# approved_credentials: SqlCredentials supplied outside source control.
+# With no arguments create_app() stays synthetic; configuration alone is not a connection.
+app = create_app(parse_config(config_values), credentials=approved_credentials)
+```
+
+No secret mechanism is accessed or implemented in this phase. Do not put real
+credentials into the template, source, command line, Git, logs or responses.
+`SqlCredentials` hides username/password representations and JSON serialization.
+Do not log secret objects' raw values, arbitrary config input or driver exceptions.
+SQL mode without credentials fails construction. Provider/connector injection
+supports mocks through `create_app(..., connection_factory=mock)` or FastAPI's
+`get_provider` dependency override; neither requires a real server.
+
+### Required SQL source contract and unmapped fields
+
+No schema, data types or history were inspected on
+`mod.VW_MNT_AIRCRAFT_SERVICEABILITY`. Its history semantics are **unknown**. It is
+not allowlisted or queried. A reviewed adapter/view meeting the following contract
+is required before real integration can be accepted. The proposed
+`[fis].[readiness_events_v1]` name is a contract target, not an existing-object claim.
+
+| Required column | Required source semantics |
+|---|---|
+| `event_time` | Non-null SQL datetime2, returned as a timezone-naive Python datetime; agreed calendar timezone; pandas-compatible range |
+| `tail` | Non-null textual unique aircraft identity, at most 64 printable characters; retain leading zeros at the database source |
+| `status` | Nonblank printable text, at most 64 characters, mapped through existing readiness aliases; unknown values remain unknown and in totals |
+| `command` | Nonblank text, uppercase letters/digits/underscore/hyphen, at most 32 characters; command at event time, including transfers |
+
+The SELECT aliases event_time to `date`. Column mapping, keys, timestamp/timezone,
+status-code meanings, command ownership/transfer history, retention, deletions,
+and complete initial/carry-in state are all **unverified/unmapped** against the
+named maintenance view. Optional platform, location, reason, hrs_to_insp and
+hrs_to_phase are intentionally not mapped or queried. A numeric tail cast to text
+cannot recover lost leading zeros and is not an accepted source remedy.
+
+The approved snapshot engine forward-fills each tail from its first event through
+the global last event date, with no earlier backfill. Therefore the SQL source
+must supply a complete, coherent event set for the intended analysis window,
+including each tail's required initial state and historical commands. A current
+status-only view cannot establish historical readiness. The adapter cannot prove
+upstream completeness. API date/command selection happens **after** loading and
+snapshot construction; request filters never truncate history before forward-fill.
+
+Exact normalized retransmissions are deduplicated by the SQL adapter. Conflicting
+records with the same timestamp/tail are rejected: there is no approved business
+tie-break rule. This does not alter the readiness engine or synthetic semantics.
+
+### Query, limits, connection lifecycle and errors
+
+The only selectable source key is `readiness_events_v1`, selecting a complete,
+literal SELECT with explicit allowlisted identifiers. There is no free-form SQL,
+identifier interpolation, procedure execution or DML. `TOP (%s)` binds the
+validated row limit plus one as a value parameter; no API value enters SQL text.
+No date/command WHERE clause is pushed down, preserving snapshot inputs.
+
+Default limits: login 5 seconds (1–60), query 15 seconds (1–120), 10,000 events
+(maximum 100,000), fetch batches of 500 (maximum 1,000), 366 calendar days per tail
+(maximum 3,660), and 100,000 projected snapshot rows (maximum 1,000,000). One excess
+event rejects the entire load. No partial/truncated metric result is returned.
+Bounded fetchmany replaces fetchall; span and projected snapshot size are checked
+before expansion. Limit selection and full-history sizing require later acceptance.
+
+Each load owns and closes its cursor/connection on success or failure, with no
+commit. Connections request UTF-8, TDS 7.4, datetime2, required encryption and
+read-only intent. Read-only intent is not an authorization boundary: a separately
+provisioned SELECT-only principal on the approved source is still required.
+Encryption, certificate/hostname trust, permissions, SQL Server 2019 behavior and
+FreeTDS configuration remain real-integration gates, not mocked claims.
+
+FreeTDS login/query timeout settings are process-wide; this application serializes
+SQL loads with a bounded lock wait. Other code using pymssql in the same process
+must not bypass this policy. Driver timeouts are not an end-to-end request deadline
+or a bounded server-side query plan. Concurrency/load and cancellation require
+separate real-server acceptance. See the [official pymssql reference](https://pymssql.readthedocs.io/en/stable/ref/pymssql.html).
+
+Routes and existing synthetic response bodies are preserved. All responses gain
+`X-FIS4-Data-Source`. Successful SQL responses and health use `source: sql`;
+health remains liveness only and does not connect. SQL-provider failures return
+503 with `{"detail":"SQL data unavailable","source":"sql"}`. SQL 404/422/500
+errors also report `source: sql`; no failure returns synthetic data. No automatic
+retry or fallback is implemented. Internal driver exception text is neither logged
+nor exposed. OpenAPI adds the SQL source value, optional error source and 503.
+
+### Dependencies and test boundary
+
+The sole added dependency is `pymssql==2.3.3`; all 22 Phase 02A pins remain unchanged.
+[The pinned release](https://pypi.org/project/pymssql/2.3.3/) publishes a CPython 3.13
+Windows x64 wheel. Installation requires explicit user approval. The provider
+imports the driver lazily and enforces version 2.3.3; mock and synthetic tests do
+not require a native driver or a connection. Driver import/package validation,
+if approved, establishes laptop compatibility only, not SQL integration.
+
+Current full suite: **79 tests = original 44 + 35 provider tests**. Portable:
+**74 = original 39 + 35**. The five external legacy-reference tests are unchanged.
+Harness regression retains **12 checks** (including the original 11 scenarios),
+with updated full/portable inventory expectations. Use the Phase 02A verification
+commands below; `verify.ps1` already discovers the new tests. `test_providers.py`
+uses only generated fictional credentials and injected DB-API mocks; no live SQL
+test is included. Tests cover bounded retrieval, strict configuration, safe
+cleanup/errors, source reporting/no fallback, ordering, duplicate events, tail
+text, snapshots, and fleet/command/status reconciliation. Actual execution and
+security findings are recorded in PROJECT_STATE.
+
+Mocked acceptance does not authorize connecting to a database, reading real fleet
+data, deploying SQL mode, installing dependencies, or publishing changes. Those
+actions need their own explicit authorization. React, ML and packaging stay deferred.
+
+## Historical Phase 02A implementation
 
 Phase 02A adds a local, read-only FastAPI backend using only the approved
 fictional fixture. SQL, ML, React, operational data, and offline packaging remain

@@ -48,9 +48,9 @@ try {
     $verify = Join-Path $root 'scripts\verify.ps1'
     $security = Join-Path $root 'scripts\security_check.ps1'
     $result = Run-Script $verify @('-PythonExecutable', $PythonExecutable)
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 44; Failures: 0; Errors: 0; Skipped: 0' -and $result.Text -match 'External-reference available: 5') 'explicit Python runs all 28 readiness and 16 API tests'
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 79; Failures: 0; Errors: 0; Skipped: 0' -and $result.Text -match 'External-reference available: 5') 'explicit Python runs all 28 readiness, 16 API and 35 mocked-provider tests'
     $result = Run-Script $verify
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 44') 'automatic interpreter selection runs all readiness and API tests'
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 79') 'automatic interpreter selection runs all readiness, API and mocked-provider tests'
     $result = Run-Script $verify @('-PythonExecutable', (Join-Path $root 'nonexistent-python.exe'))
     Check ($result.Code -eq 2 -and $result.Text -match 'Tests: not completed') 'invalid explicit Python fails without fallback'
 
@@ -93,7 +93,7 @@ try {
     $result = Run-Script $security @('-RepositoryPath', (Join-Path $temporaryRoot 'not-a-repository'))
     Check ($result.Code -eq 2) 'incomplete security inspection fails closed'
     $result = Run-Script $verify @('-PythonExecutable', $PythonExecutable, '-TestMode', 'Portable')
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 39; Failures: 0; Errors: 0; Skipped: 0' -and
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 74; Failures: 0; Errors: 0; Skipped: 0' -and
            $result.Text -match 'External-reference excluded: 5') 'portable mode explicitly excludes five external-reference tests'
     Write-Output "HARNESS RESULT: PASS; Checks: $count"
     exit 0

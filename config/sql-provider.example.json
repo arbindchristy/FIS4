@@ -1,0 +1,15 @@
+{
+  "mode": "sql",
+  "sql": {
+    "server": "sql.example.invalid",
+    "database": "FIS4_DEMO",
+    "port": 1433,
+    "source": "readiness_events_v1",
+    "login_timeout": 5,
+    "query_timeout": 15,
+    "max_rows": 10000,
+    "batch_size": 500,
+    "max_span_days": 366,
+    "max_snapshot_rows": 100000
+  }
+}

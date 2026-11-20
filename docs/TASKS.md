@@ -21,10 +21,18 @@
 | Phase 02B security review | Complete; findings dispositioned | Proposed and post-staging 26-file scans exit 0; 0 violations; 6 source-expression leads, all resolved in PROJECT_STATE |
 | Phase 02B localhost demonstration | Complete; user-reported success | Synthetic-data API on localhost; reported 2026-11-19; separate from mocked SQL and actual SQL Server testing |
 | Phase 02B staged review | Complete; awaiting publication approval | 11 reviewed files staged; 79 full / 74 portable tests and 12 harness checks pass; protected baseline unchanged; post-staging security reviewed |
-| Phase 02B publication | Pending explicit approval | Staging authorized; no commit, push or merge authorized |
+| Phase 02B publication | Published and merged per local history | c598ec4 contains Phase 02B PR #2; no fresh remote query during Phase 03A review |
 | Real SQL Server 2019 integration | Deferred; separate authorization required | Schema/history mapping, credentials, permissions, TLS, actual driver/server timeout and load evidence unresolved |
 | Production API / data integration | Deferred | Mocked SQL support does not authorize real data, database connectivity, SQL execution or ML |
-| React phase | Not started; separate instruction required | No UI work in Phase 01.6 |
+| FIS-002 documentation | Committed separately; preserved | 8bd2ba87f52ed23574d6fb44e9cd5f74b4a219b4; AGENTS/DECISIONS unchanged in Phase 03A |
+| Phase 03A React dashboard | Implemented; final review checks passed | API-owned metrics, filters, source labels, safe states; localhost synthetic mode only |
+| Phase 03A frontend verification | Verified independently | TypeScript/build PASS; Vitest 32/32; Playwright 15/15 across desktop and two tablet viewports; live FastAPI synthetic integration PASS |
+| Phase 03A dependency lock | Reviewed | 15 exact direct pins, lockfile v3 with 169 resolved entries/integrity records; installed versions match; no installs/upgrades during review |
+| Phase 03A backend regression | Preserved and verified | 79 full / 74 portable tests, 12 harness checks; backend/engine/formulas unchanged |
+| Phase 03A security and staging | Complete; final staged review passed | 23 reviewed files staged; 44-file proposed/post-staging scans exit 0, 0 violations; all 8 source-expression leads resolved in PROJECT_STATE; generated artifacts excluded |
+| Phase 03A design references | Validation pending | No approved design reference found; new layout, no claimed visual match |
+| Phase 03A publication | Pending explicit approval | Stop at final staged review; no commit/push/merge |
+| Synthetic fleet simulator / Phase 03B | Not started; not authorized | No simulator or further implementation work in this review |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 
 Do not convert missing dependencies, target-machine unknowns, or historical

@@ -1,4 +1,101 @@
-# FIS v4 — Phase 02B event providers
+# FIS v4 — Phase 03A React readiness dashboard
+
+## Phase 03A local dashboard
+
+`frontend/` contains the React/TypeScript/Vite dashboard. All readiness metrics,
+aircraft counts and status percentages come from the existing FastAPI endpoints.
+The frontend formats percentages to one decimal place; it implements no readiness
+formula and contains no runtime aircraft fixtures. Fictional response fixtures
+exist only in frontend tests and are not imported by application modules.
+
+The dashboard presents fleet Serviceability/Availability, Total Tails/FMC/PMC/
+NMCS/NMCM/DEPOT counts, command comparisons and all six canonical statuses.
+It provides date and command filters, latest-snapshot reset, retry, loading,
+empty-data, invalid-filter, source-mismatch and API-error states. Selected source
+is reported from the API rather than assumed. A SQL health response is labelled
+SQL and blocks all aggregate requests: this demonstration accepts synthetic mode
+only. Health checks are liveness-only and never establish SQL integration acceptance.
+
+Data flow: health source check, unfiltered command report to resolve the requested
+or latest API date and available commands, then parallel aggregate requests pinned
+to that exact date. Date/command/source mismatches, invalid metrics, missing statuses
+and malformed payloads fail closed. Changing filters clears old metrics; cancelled
+or stale responses cannot replace current data. API error details are not echoed.
+The dashboard never starts a SQL connection or supplies provider credentials.
+
+No approved dashboard design reference was found in the FIS4 workspace. The navy,
+teal and neutral layout is a new implementation, not a claimed visual match.
+Design-reference validation remains pending. Desktop/tablet layouts use local
+CSS, native form controls, labelled meters, visible focus and skip navigation.
+Fonts are installed system fonts; no external images, scripts or fonts are loaded.
+
+### Local development
+
+Validated tool versions and actual results are recorded in PROJECT_STATE.
+Frontend dependency installation requires explicit approval. From the repository
+root, start the existing synthetic backend (no SQL configuration or secret input):
+
+```powershell
+.\.venv\Scripts\python.exe -B -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal, enter `frontend/`. After approved dependency installation,
+the normal reproducible install is `npm.cmd ci --ignore-scripts --no-audit --no-fund`.
+Then run:
+
+```powershell
+npm.cmd run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite binds only to 127.0.0.1 with strict port 5173;
+it proxies `/health` and `/api` to `http://127.0.0.1:8000`. Requests are same-origin,
+so no backend CORS or security setting change is required. There is no arbitrary
+API URL, SQL mode selector or credential configuration in the application.
+Application code reads no `VITE_*` variables or configuration files; Vite's
+standard build-time environment handling is not used for API/secret settings.
+Keep both servers on localhost; do not use `--host 0.0.0.0`.
+Authentication is not implemented; local synthetic demonstration is the scope.
+
+Use dates returned by the API. The existing fictional fixture spans
+2026-01-01 through 2026-01-03; an empty date asks the API for its latest snapshot.
+The command menu is derived from that date's unfiltered API command report.
+Dates/commands outside available data produce an empty state rather than fabricated
+counts. The frontend does not claim the selected snapshot is wall-clock current.
+
+### Frontend checks and future asset serving
+
+From `frontend/`:
+
+```powershell
+npm.cmd run check
+npm.cmd test
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+Vitest/Testing Library tests cover components and the HTTP client through mocked
+responses. Playwright tests start owned localhost FastAPI/Vite servers and use
+the preinstalled Microsoft Edge browser at 1440x1000, 768x1024 and 1024x768.
+No browser download is needed. Ports 8000 and 5173 must be free before these tests;
+they intentionally refuse to reuse an unknown running server. SQL health/error
+responses used by browser tests are intercepted fictional responses, not a SQL
+backend. Test screenshots/reports are generated under ignored verification paths.
+
+`npm run build` checks TypeScript and compiles a local bundle into ignored
+`frontend/dist/`; this is compilation verification only. It is not a production
+deployment or offline package. All application assets are bundled locally and
+API paths remain relative. A future separately authorized phase can serve these
+static files and an SPA fallback from FastAPI, preserving `/api` and `/health`.
+Node.js is a development/build tool; the intended intranet runtime will serve
+compiled assets and will not require Node.js. No backend static mount, production
+packaging, React Phase 03B work, actual SQL integration or ML work is included here.
+
+The existing Python verification and PowerShell harness commands below remain
+unchanged; frontend test results are recorded separately from the 79 full / 74
+portable backend tests and 12 harness checks. Run the security scanner, explicitly
+review new source/lock files, then rescan after separately approved staging.
+
+## Historical Phase 02B implementation
 
 ## Phase 02B providers (mocked SQL acceptance only)
 

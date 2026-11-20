@@ -122,3 +122,25 @@ control or accessing models, credentials, operational data or databases now.
 This documentation change grants no permission to install packages, alter
 application behavior, build/deploy a release, commit or push. None of these new
 release gates is marked complete by recording FIS-002.
+
+## Phase 03A React dashboard final review gate
+
+| Gate | Actual evidence / disposition |
+|---|---|
+| Architecture decisions | FIS-001 unchanged; FIS-002 commit 8bd2ba8 preserved; AGENTS/DECISIONS unchanged; offline single-codebase requirements remain binding |
+| API-owned readiness | Frontend formats API values only; no readiness formulas or runtime aircraft fixtures; original backend/engine/tests unchanged |
+| Synthetic-only demonstration | Actual API source shown; SQL health blocks aggregates; live synthetic FastAPI integration passes; no SQL Server testing |
+| Local development | Vite and FastAPI bound to 127.0.0.1; fixed local proxy; no CORS/security changes or arbitrary API URL |
+| Frontend checks | TypeScript PASS, Vite local compilation PASS, Vitest 32/32 passed |
+| Browser acceptance | Playwright 15/15 across 1440x1000, 768x1024 and 1024x768; filters, source/errors, recovery, responsive layout, keyboard controls and sampled contrast verified |
+| Asset/network boundary | Built HTML references local compiled JS/CSS; system fonts/inline SVG; browser tests assert no external page requests; no runtime CDN dependency |
+| Backend regression | 79 full / 74 portable tests, 12 harness checks; zero failures/errors/skips; external legacy tests remain explicit |
+| Dependency lock | 15 exact installed direct pins; lockfile v3, 169 resolved entries with public HTTPS registry URLs and integrity records; no dependency changes during review |
+| Generated artifact exclusion | node_modules, dist, test-results, Playwright reports, Vite caches, workspace temp/cache and tsbuildinfo ignored; no generated files proposed |
+| Security | Proposed and post-staging 44-file scans exit 0; zero violations; all 8 source-expression leads explicitly dispositioned in PROJECT_STATE |
+| Design references | No approved reference available; validation pending; no visual matching claimed |
+| Scope and publication | 23 reviewed Phase 03A files staged; generated artifacts excluded; FIS-002 commit preserved; no commit/push/merge or synthetic fleet simulator authorization |
+
+This gate accepts the local synthetic dashboard, not a production or offline
+release. FIS-002 exact-package isolated acceptance, real SQL integration, authentication,
+cloud deployment, static FastAPI hosting and ML remain separate future gates.

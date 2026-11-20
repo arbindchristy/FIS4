@@ -86,3 +86,39 @@ Phase 02B review gate passed on 2026-11-19: fresh 79 full / 74 portable tests,
 errors and skips. The successful localhost synthetic demonstration is recorded
 as user-reported evidence; actual SQL Server testing remains unperformed.
 Staging approval does not authorize committing, pushing or merging.
+
+## FIS-002: Offline-first product and transfer acceptance
+
+Authority: [DECISIONS.md, FIS-002](DECISIONS.md), recorded 2026-11-20
+(Asia/Dubai). These are required future release/transfer gates, not claims of
+current implementation or completed verification.
+
+FIS4 must be fully developed, integrated and acceptance-tested before the
+security-approved transfer to the air-gapped Windows intranet. Cloud demonstration
+and intranet operation must use one product codebase, with cloud hosting treated
+as deployment configuration. Passing mocked SQL tests or a synthetic demonstration
+alone does not satisfy complete product/integration or offline release acceptance.
+
+| Gate | Required evidence before transfer approval |
+|---|---|
+| Complete product integration | Development, integration and acceptance evidence covers the required product before transfer; no deferred destination-side source repair, training or dependency installation |
+| Single product codebase | Cloud and intranet use the same FastAPI business logic, readiness calculations, rule-based prediction engine, ML inference code and API contracts; deployment configuration does not fork application logic |
+| Self-contained release | One Windows x64 offline release ZIP includes compatible Python runtime, all dependencies/native libraries, compiled React assets and verified ML artifacts |
+| Destination independence | Clean isolated Windows x64 validation succeeds without Node.js, npm, pip, internet access or model training on the intranet |
+| Configuration-only deployment | Only approved SQL connection, approved local secret mechanism and required deployment settings are needed; no manual source-code changes or embedded credentials |
+| Pre-connection verification | Bundled synthetic mode validates startup, API and UI before any authorized SQL connection |
+| Deterministic operations | Start, stop, health-check, diagnostics and rollback scripts are supplied and their behavior is verified |
+| Exact-package validation | Build and test the exact release package in a clean, network-isolated Windows x64 environment before transfer; evidence identifies the tested release and its ZIP hash |
+| Integrity and inventory | Integrity manifests and dependency inventory cover the bundled runtime, dependencies, native libraries, compiled assets and verified ML artifacts |
+| Security-approved transfer | A security-review package and verification evidence identify the exact release; findings are dispositioned and transfer is explicitly security-approved |
+| External SQL dependencies | SQL schema/source contracts, permissions, TLS and operational dependencies that packaging cannot eliminate are documented, with acceptance evidence and any remaining blockers explicit |
+| Business-rule preservation | FIS-001 customer-approved formulas, NMCM denominator contribution, zero guards and protected regression tests remain unchanged and pass |
+
+Existing tracked-source security boundaries remain in force. Bundled runtimes,
+libraries and verified model artifacts belong to a separately authorized release
+assembly/review workflow; this decision does not authorize adding them to source
+control or accessing models, credentials, operational data or databases now.
+
+This documentation change grants no permission to install packages, alter
+application behavior, build/deploy a release, commit or push. None of these new
+release gates is marked complete by recording FIS-002.

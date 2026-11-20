@@ -58,3 +58,63 @@ availability** (display precision only).
 
 See `../TEST_REPORT.md` for the actual rerun command, all 28 test results,
 legacy-versus-new comparison, and legacy preservation evidence.
+
+## FIS-002: Offline-First Deployment and Single Product Codebase — CUSTOMER REQUIREMENT / APPROVED
+
+Date: 2026-11-20 (Asia/Dubai).
+
+Authority: the user's explicit "FIS4 architecture decision — FIS-002" instruction,
+relaying the customer requirement. No separate customer communication was accessed.
+
+### Decision
+
+FIS4 must be fully developed, integrated and acceptance-tested before
+security-approved transfer to the air-gapped Windows intranet. Transfer is not
+an opportunity to finish development, install missing dependencies, train models
+or repair source code on the destination machine.
+
+The cloud customer demonstration and intranet deployment are one product with
+one codebase. They must share the same FastAPI business logic, readiness
+calculations, rule-based prediction engine, ML inference code and API contracts.
+Cloud hosting is a deployment configuration, not a separate implementation of
+application logic. Data-source and hosting configuration may differ; application
+rules and API semantics must remain shared.
+
+### Required deployment behavior
+
+1. Deliver one self-contained Windows x64 offline release ZIP.
+2. Bundle compatible Python runtime, dependencies, native libraries, compiled
+   React assets and verified ML artifacts in that release.
+3. Require no Node.js, npm, pip, internet access or model training on the intranet.
+4. Minimize configuration to the approved SQL connection, credentials supplied
+   through an approved local secret mechanism, and required deployment settings.
+   Do not embed deployment credentials in source code or release artifacts.
+5. Preserve synthetic mode for pre-connection verification.
+6. Supply deterministic start, stop, health-check, diagnostics and rollback scripts.
+7. Never require manual source-code modification during deployment.
+8. Build and test the exact release package on a clean, network-isolated Windows
+   x64 environment before transfer.
+9. Generate integrity manifests, a dependency inventory, verification evidence
+   and a security-review package tied to that exact release.
+10. Document SQL schema, permission, TLS and operational dependencies that cannot
+    be eliminated by packaging. Packaging does not waive integration acceptance
+    or make unresolved external dependencies disappear.
+11. Treat cloud hosting as deployment configuration while preserving the shared
+    application implementation and API contracts.
+12. Preserve all FIS-001 customer-approved formulas and regression tests,
+    including NMCM in the serviceability denominator and existing zero guards.
+
+### Acceptance and change-control consequences
+
+The release gates in RELEASE_GATES.md require evidence for product integration,
+cloud/intranet code and contract parity, complete offline contents, destination
+prerequisite independence, configuration-only deployment, operational scripts,
+synthetic pre-connection checks, exact-package isolated validation, integrity and
+security review, and documented SQL dependencies before transfer approval.
+
+This decision records requirements, not a claim that prediction, ML, packaging,
+SQL integration or release acceptance is already implemented or verified. Those
+activities retain their existing separate authorization and acceptance boundaries.
+This documentation-only instruction does not authorize package installation,
+application changes, database/credential/model access, deployment, commit or push.
+FIS-002 does not supersede or weaken FIS-001.

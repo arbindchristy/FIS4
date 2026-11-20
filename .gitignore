@@ -69,3 +69,8 @@ logs/
 operational_data/
 local_data/
 /.harness-test-tmp/
+
+# Frontend local verification artifacts
+/frontend/test-results/
+/frontend/playwright-report/
+*.tsbuildinfo

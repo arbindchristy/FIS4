@@ -22,6 +22,40 @@ Preserve the existing zero-denominator guards. Fleet and command metrics must
 use the same formulas. Run the existing 28 Phase 01 tests after relevant work;
 do not weaken tests to permit a formula change.
 
+## Offline-first deployment and single product codebase
+
+Follow the customer requirement [FIS-002](docs/DECISIONS.md): FIS4 must be fully
+developed, integrated and acceptance-tested before security-approved transfer
+to the air-gapped Windows intranet.
+
+- Maintain one product codebase for cloud customer demonstration and intranet
+  deployment: shared FastAPI business logic, readiness calculations, rule-based
+  prediction engine, ML inference code and API contracts. Cloud hosting is
+  deployment configuration, not a separate implementation of application logic.
+- Deliver one self-contained Windows x64 offline release ZIP bundling compatible
+  Python runtime, dependencies, native libraries, compiled React assets and
+  verified ML artifacts. The intranet must require no Node.js, npm, pip, internet
+  access or model training.
+- Limit deployment configuration to the approved SQL connection, credentials
+  through an approved local secret mechanism, and required deployment settings.
+  Never require manual source-code edits during deployment or embed credentials
+  in source or release artifacts.
+- Preserve synthetic mode for pre-connection verification. Supply deterministic
+  start, stop, health-check, diagnostics and rollback scripts.
+- Build and test the exact release package in a clean, network-isolated Windows
+  x64 environment before transfer. Generate integrity manifests, dependency
+  inventory, verification evidence and a security-review package for that release.
+- Document unavoidable SQL schema, permission, TLS and operational dependencies;
+  packaging does not substitute for their acceptance evidence.
+- Preserve FIS-001 formulas, zero-denominator guards and protected regression
+  tests. FIS-002 authorizes no formula change and makes no claim that future
+  product components or release capabilities already exist.
+
+Apply the release gates before transfer. Implementation, package installation,
+database/credential/model access, packaging, deployment, commit and push still
+require authorization for the active task; a recorded requirement is not itself
+permission to execute those activities.
+
 ## Project boundaries
 
 - Legacy reference `C:\AI\Projects\fleet_cpi_suite` is read-only.

@@ -1,5 +1,151 @@
 # FIS4 project state
 
+## Current Phase 03A final staged review — 2026-11-20 (Asia/Dubai)
+
+Branch: `feature/phase03a-react-dashboard`. HEAD remains
+`8bd2ba87f52ed23574d6fb44e9cd5f74b4a219b4`, the separate FIS-002 documentation
+commit. That commit, AGENTS.md and DECISIONS.md are preserved unchanged. This
+review authorizes staging Phase 03A only; no commit, push, merge or simulator work
+is authorized or performed. Earlier phase records below are historical evidence.
+Local history contains Phase 02B as `c598ec4`; its earlier pending-publication
+status is superseded by that local evidence, with no fresh remote query here.
+
+### Scope and source review
+
+Frontend source/configuration/tests, package.json, package-lock.json and the
+single-line `src/vite-env.d.ts` Vite-client type reference were reviewed. Runtime
+React modules import no test fixture and implement no readiness calculation.
+Percentages/counts are API-owned; formatting is presentation only. A test confirms
+the frontend displays API percentages even when counts would suggest other values.
+API calls use fixed relative paths, credentials: omit and redirect: error; no
+arbitrary API host, credential field, browser storage, unsafe HTML or runtime CDN
+dependency is used. CSS has only a relative token import, installed system fonts
+and an inline SVG data URI; its XML namespace is not a network asset request.
+
+The flow is browser snapshot/command selection -> localhost Vite proxy -> existing
+FastAPI synthetic provider/readiness engine -> validated responses -> rendered
+KPIs/counts/commands/statuses. Health is checked before aggregate requests. SQL
+health is labelled SQL and blocks aggregates. Missing/malformed/source-mismatched
+data is not replaced with fabricated metrics. Responses are pinned to one API date;
+cancelled or stale loads cannot overwrite the selected view. Source reporting
+remains SQL if a late parallel synthetic response follows a SQL error.
+
+Vite development binds 127.0.0.1:5173 and proxies /health and /api only to
+127.0.0.1:8000; preview also binds loopback. No backend CORS/security changes are
+required. Backend source, readiness.py, original tests, fixture and Python pins
+are unchanged. FIS-001 formulas/regressions remain locked; FIS-002 remains binding.
+
+No approved dashboard design references were found in the workspace. Design-reference
+validation remains pending; no visual matching is claimed. Fresh desktop/tablet
+screenshots were inspected. Browser tests verify responsive columns, no horizontal
+overflow, keyboard/skip navigation, touch-sized controls and sampled contrast >=4.5.
+
+### Dependency and generated-file review
+
+Node 24.4.1 / npm 11.4.2. All 15 direct dependencies are exact pins and match
+installed packages: React/React DOM 19.3.1; TypeScript 7.0.2; Vite 8.3.8; React
+plugin 6.3.0; Vitest 5.1.1; jsdom 28.1.0; Playwright Test 1.65.1; Testing Library
+DOM 10.4.2 / React 16.3.3 / user-event 14.6.13 / jest-dom 8.0.0; Node types
+24.19.2 and React/React DOM types 19.3.0. No dependencies were installed or upgraded
+during this review; npm checks used offline mode and a workspace-local cache.
+
+package-lock.json is lockfileVersion 3, 88,681 bytes, with 169 resolved non-root
+package entries. Root declarations match package.json; every entry has a version
+and integrity record and an HTTPS registry.npmjs.org URL without embedded userinfo
+or linked/local dependencies. Reviewed lockfile SHA-256:
+`8f2a864278789887a3be38933447a92f47156cd560e887796f6ca8c5f4416ccb`.
+This is a local lock/installation consistency review, not a vulnerability-database
+audit or a claim of clean isolated release reproducibility.
+
+check-ignore verified node_modules, dist, Playwright test-results/reports,
+node_modules/.vite caches, workspace .harness-test-tmp and *.tsbuildinfo are
+excluded. Only reviewed source, configuration, tests and the dependency lockfile
+are proposed; no generated bundle, screenshot, browser binary, dependency tree,
+cache, temporary fixture, environment file or credential is included.
+
+### Fresh executed verification
+
+The user supplied matching successful verification results before this review.
+The commands below were independently rerun here. Frontend commands ran from
+C:\AI\Projects\FIS4\frontend; backend commands ran from the repository root.
+Every completed check listed exited **0**.
+
+| Actual command/check | Actual result |
+|---|---|
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run check` | TypeScript check PASS |
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache test` | Vitest **32/32 passed**, 2 test files, no failures/skips |
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run build` | TypeScript + Vite PASS; 18 modules; local JS 234.21 kB, CSS 11.51 kB, HTML 0.57 kB |
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run test:e2e` | Playwright **15/15 passed**, no retries; desktop 1440x1000, tablet portrait 768x1024, tablet landscape 1024x768 |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | Backend **79 passed**, 0 failures/errors/skips |
+| Same backend verify command with `-TestMode Portable` | Backend **74 passed**, 0 failures/errors/skips; five external legacy-reference tests excluded |
+| `powershell.exe -NoProfile -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **12/12 harness checks passed**, original scenarios retained |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1 -RepositoryPath C:\AI\Projects\FIS4\.harness-test-tmp\phase03a-proposed-review` | 44 reviewed proposed files; 0 violations; 8 manual leads, dispositioned below; REVIEW REQUIRED, exit 0 |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | Actual post-staging scan: 44 index/working-tree files; 0 violations; same 8 resolved leads; REVIEW REQUIRED, exit 0; repeated after final documentation staging |
+| `git -c safe.directory=C:/AI/Projects/FIS4 check-ignore -v` with the reviewed generated-path allowlist | All 7 representative dependency/build/report/cache/temp paths ignored |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --check` | No whitespace errors |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --cached --check` | Initial staged check found CRLF treated as trailing whitespace in the Vite-client declaration; normalized that one line to LF without changing its declaration; final staged check repeated before completion |
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache --prefix frontend run check` from repository root | Post-line-ending TypeScript verification PASS, exit 0; no application logic or dependency change |
+| Inline local Node checks of package/lock/installed versions and built HTML assets | All 15 pins/169 resolved lock entries valid; compiled HTML references local JS/CSS only; test-private markers absent from JS bundle |
+
+Frontend browser tests start owned default-synthetic FastAPI and Vite servers on
+loopback and use preinstalled Microsoft Edge. Tests compare rendered metrics with
+actual API values, apply date/command filters, recover from 404/network errors,
+check 422 and SQL health states, and assert no external page requests. SQL health
+and failure cases are intercepted fictional responses; no SQL Server connection
+is tested. The live FastAPI synthetic integration passed. Test-owned servers were
+stopped afterward; both ports were free. No public server was exposed.
+
+### Security dispositions and staged scope
+
+The 26 tracked files plus the exact 18-file frontend source allowlist were copied
+to a disposable workspace index for pre-staging review. Its exact cleanup path
+was checked before removal. Every proposed source and the lockfile were covered.
+The scanner's eight findings represent four code lines, each reported for index
+and working-tree content:
+
+| Location / rule | Explicit disposition |
+|---|---|
+| api/config.py:29, credential-assignment (2) | Existing SecretStr field declaration; no embedded credential value |
+| api/providers.py:86, database-endpoint-assignment (2) | Existing runtime server argument binding; no embedded endpoint |
+| api/providers.py:89, credential-assignment (2) | Existing injected SecretStr argument binding; no embedded credential or logging |
+| frontend/e2e/dashboard.spec.ts:14, database-endpoint-assignment (2) | Test compares url.hostname to localhost/127.0.0.1; equality expression matched heuristically, not a DB endpoint assignment |
+
+All eight leads are resolved by source review; there are no confirmed violations
+or unresolved manual security findings. Scanner rules were not weakened. The
+actual staged index/working-tree scan returned the same eight reviewed leads.
+Final documentation is restaged and security checked before completing review.
+Heuristic scanning does not inspect full
+Git history or prove dependency vulnerability absence.
+
+Reviewed Phase 03A stage list (23 files): .gitignore; README.md; docs/PROJECT_STATE.md;
+docs/TASKS.md; docs/RELEASE_GATES.md; and all 18 reviewed frontend source/config/
+test/lock files listed by the final staged inventory. AGENTS.md and DECISIONS.md
+are excluded; their FIS-002 commit remains intact. No backend/Python file is staged.
+The exact staged filename allowlist, staged whitespace and working-tree/index
+consistency checks are repeated before completion. Generated files remain excluded.
+After the successful checks, review documentation was updated and the single-line
+Vite type declaration was normalized from CRLF to LF to satisfy the staged
+whitespace check. Its declaration semantics are unchanged and TypeScript is rerun.
+Application/test/lock logic remains the verified snapshot. HEAD stays at the
+FIS-002 commit; no new commit is created.
+
+### Limitations and stop boundary
+
+Design-reference validation is pending. Authentication, real SQL Server integration,
+cloud hosting, production static serving and offline release acceptance remain
+unimplemented/unverified or separately gated. The local Vite build verifies compiled
+assets, not FIS-002 clean isolated Windows ZIP acceptance. Future FastAPI static
+asset serving must preserve the API routes and require no Node.js on the intranet.
+No synthetic fleet simulator, Phase 03B, ML or release-packaging work was started.
+Existing pandas inference and Starlette HTTPX adapter warnings remain; Vitest emits
+an environment-startup performance advisory and Playwright emits NO_COLOR/FORCE_COLOR
+advisories. These are non-blocking and not suppressed by application changes.
+
+Proposed commit: `FIS4 Phase 03A: React readiness dashboard`.
+Stop at final staged review; commit/push/merge require explicit later approval.
+
+## Historical Phase 02B records
+
 ## Current Phase 02B record — 2026-11-19 (Asia/Dubai)
 
 Branch verified: `feature/phase02b-sql-provider`, initially clean. Local HEAD is

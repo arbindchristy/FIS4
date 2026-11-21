@@ -1,14 +1,14 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   base: '/',
   server: {
-    host: '127.0.0.1', port: 5173, strictPort: true,
+    host: '127.0.0.1', port: mode === 'history-demo' ? 5174 : 5173, strictPort: true,
     proxy: {
-      '/health': { target: 'http://127.0.0.1:8000' },
-      '/api': { target: 'http://127.0.0.1:8000' },
+      '/health': { target: mode === 'history-demo' ? 'http://127.0.0.1:8001' : 'http://127.0.0.1:8000' },
+      '/api': { target: mode === 'history-demo' ? 'http://127.0.0.1:8001' : 'http://127.0.0.1:8000' },
     },
   },
   preview: { host: '127.0.0.1', port: 4173, strictPort: true },
@@ -17,4 +17,4 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'], maxWorkers: 1,
     restoreMocks: true, unstubGlobals: true,
   },
-});
+}));

@@ -269,3 +269,32 @@ at fleet and FICTIONAL_A levels. Sizes are exact `len(response.content)` JSON by
 all responses for the same selection must have identical sizes. Timings include
 in-process TestClient/ASGI/thread dispatch/model validation/JSON serialization;
 they are not network/TCP/TLS, concurrent-load or production latency guarantees.
+
+## Phase 03B-2B Task 2: React client integration
+
+The frontend consumes this existing series contract without changing backend
+models, engine or simulator. The snapshot flow resolves the reporting date from
+the API, pins command/snapshot requests to that date, and then requests the series
+using that same date/command. Changing the historical window requests only the
+series; changing snapshot selection cancels obsolete work. Full daily observations
+are rendered without smoothing or recomputing readiness. Last-point metrics and
+six status counts must match the selected snapshot before a chart is displayed.
+
+Client validation covers supported window, source/header agreement, dates and
+contiguous ordering, effective span, 1..365 point count, finite 0..100 percentages,
+160/40 history populations and canonical count reconciliation. PMC count checking
+is contract validation, not recalculation of serviceability or availability.
+Chart geometry/date spacing and display rounding are presentation only.
+
+A synthetic-header 404 with the exact stock `Not Found` detail identifies an
+unregistered history endpoint for CSV mode and displays `History not enabled`.
+Other 404s mean no observations for the selection; 422 is invalid input; failures,
+malformed contracts and timeouts show retryable history errors. Error detail values
+are not displayed. SQL reported by health or any later history response blocks
+the fictional demonstration and clears metrics. Snapshot data remains usable on
+ordinary history-only errors, and no fabricated fallback series is substituted.
+
+The history-only route may be unavailable behind a differently configured proxy;
+there is no new capability/authentication API. Deployment compatibility and access
+control remain separate acceptance requirements. README documents the two explicit
+loopback development configurations; no arbitrary runtime API host is supported.

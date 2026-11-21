@@ -1,5 +1,25 @@
 # FIS4 release gates
 
+## Phase 03B-2B Task 2 React historical dashboard acceptance
+
+| Gate | Actual evidence / limit |
+|---|---|
+| Baseline / decisions | feature/phase03b2b-react-history at 726f343; FIS-001/FIS-002, backend/engine/simulator and original Python tests unchanged |
+| Historical UI | API observations for 30/90/180/365 days; true date/0..100 axes, solid/dashed lines, hover/keyboard day detail and equivalent daily table; no readiness formulas or smoothing |
+| Snapshot consistency | API-resolved date and selected command pinned across views; last historical point must match snapshot metrics/status counts; no stale/fabricated substitutes |
+| Comparisons / composition | API command counts/metrics; compact six-status stack and matching labels; PMC aggregate retained while PMCM/PMCS remain separate |
+| Provider/error boundary | CSV snapshots remain usable with explicit unsupported-history state; ordinary trend errors are isolated; SQL from health or later response clears metrics and blocks demo |
+| Themes / accessibility | Light default, optional identical dark mode; native labelled controls, visible focus, chart keyboard/table equivalent; sampled text contrast >=4.5 and responsive overflow tests in both themes |
+| Frontend verification | TypeScript and local Vite build PASS; Vitest 61/61 (original 32 retained); Playwright 27/27 (original 15 retained), actual fictional history backend, both-theme screenshots |
+| Backend regression | Unchanged 139 full / 134 portable tests and 12/12 harness checks pass; external-reference exclusions explicit |
+| Dependencies / network | No new packages/pins/lock changes; local SVG/CSS/system fonts/assets; normal and history demo configurations bind only loopback; no runtime CDN/external requests |
+| Security / artifacts | Tracked scan exits 0, no violations; nine leads resolved (eight existing code expressions plus one benign Playwright-option documentation match); five new files scanned with no extra leads; screenshots/dist/caches ignored |
+| Review / publication | Eighteen source/test/config/doc files remain unstaged/uncommitted; no commit, push, merge, deployment, SQL or ML work |
+
+This accepts local fictional interaction and sampled browser accessibility,
+not production security, full accessibility audit, customer design acceptance,
+real SQL integration, FIS-002 offline release packaging or static FastAPI hosting.
+
 ## Phase 03B-2B Task 1 historical trend API local acceptance
 
 | Gate | Actual evidence / boundary |

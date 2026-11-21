@@ -4,4 +4,30 @@
   --muted: #566a7b;
   --background: #f1f4f8;
   --line: #d5dfe8;
+  --surface: #ffffff;
+  --soft: #edf3f8;
+  --svc: #176d67;
+  --avail: #305e97;
+  --button: #142e46;
+  --button-text: #ffffff;
+  --notice: #edf6fa;
+  --notice-ink: #244e65;
+  --focus: #1674cb;
+}
+[data-theme='dark'] {
+  color-scheme: dark;
+  --navy: #eef4fb;
+  --ink: #e3edf6;
+  --muted: #b5c7d7;
+  --background: #101c2a;
+  --line: #43596e;
+  --surface: #192a3d;
+  --soft: #233b51;
+  --svc: #8be2d3;
+  --avail: #aed0ff;
+  --button: #8be2d3;
+  --button-text: #102d34;
+  --notice: #20374a;
+  --notice-ink: #c4e4f2;
+  --focus: #82c7ff;
 }

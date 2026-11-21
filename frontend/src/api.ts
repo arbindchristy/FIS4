@@ -9,7 +9,7 @@ export type Fleet = Metadata & { metrics: Metrics };
 export type Commands = Metadata & { commands: (Metrics & { command: string })[] };
 export type Distribution = Metadata & { total_tails: number; statuses: { status: string; count: number; pct: number }[] };
 export type Dashboard = { fleet: Fleet; commands: Commands; distribution: Distribution; availableCommands: string[] };
-export type FailureKind = 'empty' | 'invalid' | 'unavailable' | 'contract' | 'source';
+export type FailureKind = 'empty' | 'invalid' | 'unavailable' | 'contract' | 'source' | 'unsupported';
 
 export class DashboardError extends Error {
   constructor(public readonly kind: FailureKind, message: string, public readonly source?: Source) {
@@ -100,6 +100,10 @@ async function request(path: string, signal: AbortSignal, reportSource: (source:
     }
     if (header !== null && (!isSource(header) || (isObject(body) && body.source !== undefined && body.source !== header))) contract();
     if (!response.ok) {
+      if (path.startsWith('/api/v1/readiness/history/series?') && response.status === 404
+          && header === 'synthetic' && isObject(body) && body.detail === 'Not Found') {
+        throw new DashboardError('unsupported', 'Historical trends are not enabled for this provider. Snapshot controls remain available.', source);
+      }
       if (response.status === 404) throw new DashboardError('empty', 'No readiness snapshot matches these filters. Choose another date or reset to the latest snapshot.', source);
       if (response.status === 422) throw new DashboardError('invalid', 'The API rejected these filters. Check the date and command, then apply again.', source);
       throw new DashboardError('unavailable', 'The readiness API is unavailable. Check the local backend and try again.', source);
@@ -149,4 +153,46 @@ export async function loadDashboard(filters: Filters, signal: AbortSignal, repor
   }
   return { fleet: selectedFleet, commands: selectedCommands, distribution: selectedDistribution,
     availableCommands: allCommands.commands.map(row => row.command) };
+}
+
+export const WINDOWS = [30, 90, 180, 365] as const;
+export type HistoryWindow = (typeof WINDOWS)[number];
+export type Observation = Metrics & { date: string; status_counts: Record<(typeof STATUSES)[number], number> };
+export type HistorySeries = { source: 'synthetic'; command: string | null; requested_days: HistoryWindow;
+  start_date: string; end_date: string; point_count: number; observations: Observation[] };
+const dayMillis = 86400000;
+
+/** Validate observations and selection consistency, never recompute readiness percentages. */
+export async function loadSeries(snapshot: Dashboard, days: HistoryWindow, signal: AbortSignal,
+  reportSource: (source: Source) => void): Promise<HistorySeries> {
+  if (!WINDOWS.includes(days) || !validDate(snapshot.fleet.date) || snapshot.fleet.source !== 'synthetic') contract();
+  const params = new URLSearchParams({ end_date: snapshot.fleet.date, days: String(days) });
+  if (snapshot.fleet.command) params.set('command', snapshot.fleet.command);
+  const value = await request(`/api/v1/readiness/history/series?${params}`, signal, reportSource);
+  if (!isObject(value) || value.source !== 'synthetic' || value.command !== snapshot.fleet.command
+      || value.requested_days !== days || value.end_date !== snapshot.fleet.date
+      || typeof value.start_date !== 'string' || !validDate(value.start_date)
+      || !isCount(value.point_count) || !Array.isArray(value.observations)) contract();
+  if (value.observations.length === 0) throw new DashboardError('empty', 'No historical observations were returned for this period.', 'synthetic');
+  const span = (Date.parse(value.end_date as string) - Date.parse(value.start_date)) / dayMillis + 1;
+  if (value.point_count !== value.observations.length || span !== value.point_count || span < 1 || span > days) contract();
+  for (const [index, point] of value.observations.entries()) {
+    metrics(point);
+    const row = point as unknown as Record<string, unknown>;
+    const expectedDay = new Date(Date.parse(value.start_date) + index * dayMillis).toISOString().slice(0, 10);
+    if (row.date !== expectedDay || point.total_tails !== (value.command === null ? 160 : 40)
+        || !isObject(row.status_counts) || Object.keys(row.status_counts).length !== 6) contract();
+    const counts = row.status_counts;
+    if (!STATUSES.every(code => isCount(counts[code]) && counts[code] <= 160)
+        || STATUSES.reduce((sum, code) => sum + (counts[code] as number), 0) !== point.total_tails
+        || counts.FMC !== point.fmc_tails || counts.NMCS !== point.nmcs_tails
+        || counts.NMCM !== point.nmcm_tails || counts.DEPOT !== point.depot_tails
+        || (counts.PMCM as number) + (counts.PMCS as number) !== point.pmc_tails) contract();
+  }
+  const series = value as unknown as HistorySeries;
+  const last = series.observations[series.observations.length - 1];
+  if (![...countKeys, 'svc_pct', 'avail_pct'].every(key =>
+    Math.abs(last[key as keyof Metrics] - snapshot.fleet.metrics[key as keyof Metrics]) < 1e-8)) contract();
+  if (!STATUSES.every(code => last.status_counts[code] === snapshot.distribution.statuses.find(row => row.status === code)?.count)) contract();
+  return series;
 }

@@ -39,7 +39,10 @@
 | Phase 03B-2A publication | Merged through PR #5; locally verified | Current starting HEAD 9ac0f9aa7fc3243438363113ce920469344f3b8f; earlier pending status superseded |
 | Phase 03B-2B Task 1 trend API | Implemented; local review | History-only GET series, bounded windows, six-status daily observations, strict validation, payload limit; no frontend changes |
 | Phase 03B-2B Task 1 verification | Local evidence recorded | 139 full / 134 portable tests; 19 new tests; all-window response sizes/timings and harness/security outcomes in PROJECT_STATE |
-| Phase 03B-2B Task 1 publication | Not authorized | Nine reviewed files remain unstaged; no commit, push, merge or deployment |
+| Phase 03B-2B Task 1 publication | Merged through PR #6; locally verified | Starting HEAD 726f34320c5ca658b70bd16b149b52dff3e724e5; prior pending status superseded |
+| Phase 03B-2B Task 2 React history | Implemented; local review | Four windows, synchronized snapshot/trends, command counts, six-status composition, light/dark themes and keyboard/table access |
+| Phase 03B-2B Task 2 verification | Passed | TypeScript/build; Vitest 61/61; Playwright 27/27 including real history backend; six actual theme screenshots; Python 139/134; harness 12/12; security dispositions in PROJECT_STATE |
+| Phase 03B-2B Task 2 publication | Not authorized | Eighteen reviewed files remain unstaged and uncommitted; no push/merge/deploy |
 | Rule-based / ML prediction | Not started | Future-only feature boundary documented; no targets, training, inference or prediction API |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 

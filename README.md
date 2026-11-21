@@ -1,4 +1,35 @@
-# FIS v4 — Phase 03A React readiness dashboard
+# FIS4 helicopter readiness dashboard
+
+## Phase 03B-2B Task 2: React historical helicopter dashboard
+
+The existing dashboard now includes 30/90/180/365-day API trends, synchronized
+date/command selection, command counts, six-status composition, keyboard/hover
+inspection and an accessible daily table. Light is the default; the theme toggle
+provides the same data in dark mode. No chart/theme package was added. The UI
+identifies all data as fictional historical helicopter data, not live intelligence.
+CSV snapshots still work with an explicit history-not-enabled message; SQL remains
+blocked. All readiness percentages originate from the backend.
+
+For a local historical demonstration, use two terminals from FIS4:
+
+```powershell
+# Terminal 1: fixed fictional history, loopback 8001 (test/demo helper only).
+.\.venv\Scripts\python.exe -B frontend\e2e\history_backend.py
+# Terminal 2:
+cd frontend
+npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run dev -- --mode history-demo
+```
+
+Open `http://127.0.0.1:5174`. Vite's explicit history-demo mode proxies only to
+127.0.0.1:8001. Normal development still uses 5173 -> 8000 and the default CSV API.
+No credentials, external hosts or provider selectors are accepted from the browser.
+The helper is not an offline release/start-stop solution. FIS-002 packaging and
+future FastAPI static serving remain separate work; production assets compile
+locally without runtime CDN dependencies.
+
+Actual commands/results, screenshot paths, security dispositions and limitations
+are in docs/PROJECT_STATE.md. Both plot and daily table can scroll within their
+panels on narrow screens, without page overflow. Theme choice is session-local.
 
 ## Phase 03B Task 1: offline fictional fleet simulator
 

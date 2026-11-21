@@ -1,5 +1,178 @@
 # FIS4 project state
 
+## Phase 03B-2B Task 2 React historical dashboard review — 2026-11-21 (Asia/Dubai)
+
+Branch `feature/phase03b2b-react-history`; clean starting HEAD
+`726f34320c5ca658b70bd16b149b52dff3e724e5` contains the historical series API
+merge through PR #6. This section supersedes earlier pending Task 1 publication
+statuses; prior evidence is historical. No remote access was required. FIS-001,
+FIS-002, all backend source/tests, simulator, readiness engine, Python pins and
+frontend package.json/package-lock.json are unchanged.
+
+### Implemented UI and data flow
+
+Existing minimalist dashboard retained, now explicitly labelled fictional
+helicopter history rather than live operational intelligence. Light theme defaults
+to white/off-white/navy/teal; optional dark uses local CSS variables with identical
+controls/data. No images, hero art, new animations, theme/chart library, CDN,
+external font, analytics, storage persistence or authentication placeholder added.
+
+The new HistoricalTrends component consumes validated API series for 30/90/180/365
+days, with actual date axis, fixed 0..100 percentage axis, solid/dashed legend,
+unsmoothed daily polylines, hover/focus details, Home/End/arrow keys, native day
+slider and equivalent daily table. Both line paths preserve every observation.
+The table includes PMC aggregate plus six canonical counts. It is memoized apart
+from transient chart selection; paths are memoized per series. Narrow screens
+scroll the plot/table within labelled focusable regions rather than the page.
+
+Existing date/command/latest-snapshot controls remain intact; the historical
+window persists across snapshot selection. The API-resolved snapshot date and
+command are used consistently in series requests. Last-point metrics/status
+counts must match the selected snapshot. No readiness formula is computed in
+React: count reconciliation is validation; percentage coordinates/rounding are
+presentation. Command comparisons now include API FMC/PMC/NMCS/NMCM/DEPOT counts;
+the compact stacked composition and matching labels preserve PMCM/PMCS separately.
+
+AbortController cleanup plus response guards prevent stale work from replacing
+newer selections. Window changes clear obsolete charts immediately; valid snapshot
+metrics remain available on history-only failures. CSV mode's exact synthetic
+Not Found response is distinguished as unsupported history. Other empty, invalid,
+malformed, unavailable and retry states remain explicit. SQL from health or later
+history response blocks the demo and clears metrics; no fabricated fallback data.
+
+The local React review skill checklist was applied: stable hook dependencies and
+cleanup, parallel independent snapshot fetches, no remote/runtime fixtures, memoized
+heavy table/path work, typed unknown-response validation, native accessible controls,
+labels, focus visibility, keyboard chart/table access and no new dependencies.
+
+### Actual executed checks
+
+Frontend commands ran from C:\AI\Projects\FIS4\frontend; Python/harness/security
+from the root. Existing Node 24.4.1 / npm 11.4.2 and project .venv were reused.
+All recorded commands below exited **0**. No packages or browser binaries installed.
+
+| Actual command / check | Recorded implementation result before final corrections |
+|---|---|
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run check` | TypeScript PASS |
+| Same npm prefix, `test` | **61/61 Vitest passed**, three files, 13.94 s; original 32 retained plus 29 new cases |
+| Same npm prefix, `run build` | TypeScript/Vite PASS; 19 modules; local JS 243.16 kB, CSS 15.80 kB, HTML 0.57 kB |
+| Same npm prefix, `run test:e2e` | **27/27 Playwright passed**, zero retries, 1.2 min; original 15 CSV tests plus 12 history tests |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **139 passed**, 0 failures/errors/skips, 66.322 s |
+| Same verify command with `-TestMode Portable` | **134 passed**, 0 failures/errors/skips, 65.587 s; same five external-reference tests excluded |
+| `powershell.exe -NoProfile -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **12/12 checks passed**, unchanged harness and expectations |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | 56 tracked files; exit 0; 0 confirmed violations; nine manual leads dispositioned below |
+| Inline existing-scanner Inspect-Text AST extraction, exact five-file untracked inventory, plaintext/link/size and whitespace checks | **5/5 passed**, no additional leads; no index modifications |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --exit-code 726f343 -- AGENTS.md docs/DECISIONS.md readiness.py simulator api tests requirements.txt frontend/package.json frontend/package-lock.json` | Protected decisions, backend/engine/simulator/regressions and all dependency declarations unchanged |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --check` | Final whitespace/scope checked; new-file whitespace reviewed separately |
+
+Small loops: the original 32 frontend tests passed before extending coverage.
+One new TypeScript selector initially used an unsupported Testing Library option;
+it was corrected and all checks rerun. The first full history browser run passed
+24/24. Adding explicit hover verification exposed a test assumption about the full
+SVG midpoint being visible on mobile's scrollable plot; targeting a known visible
+observation corrected the assertion. Final browser run adds real delayed-request
+cancellation coverage and passes 27/27. No tests or security rules were weakened.
+Line-ending-only noise in App.tsx and the original fixture was removed by preserving
+their baseline line endings. Known pandas, Starlette/HTTPX, Vitest environment-startup
+and Playwright NO_COLOR/FORCE_COLOR advisories remain non-blocking and unsuppressed.
+
+### Actual browser integration and screenshot evidence
+
+Playwright owns separate loopback CSV FastAPI/Vite (8000/5173) and fictional
+history FastAPI/Vite (8001/5174) servers; reuseExistingServer=false. The existing
+cache is initialized normally through lifespan in the test/demo helper; no SQL
+connection is made. All browser page requests are restricted/asserted loopback.
+Tests compare actual API percentages to rendered line coordinates, check every
+window, date/command/latest reset, six statuses/table, hover and keyboard controls,
+CSV unsupported mode, malformed/unavailable history, SQL blocking and actual
+request cancellation with a delayed obsolete response. Component tests additionally
+cover late responses even when mocked transport ignores abort.
+
+CSV viewports remain 1440x1000, 768x1024 and 1024x768. History viewports are
+1440x1000, 768x1024 and 390x844. Both themes are tested for document overflow and
+sampled text contrast >=4.5 at heading, KPI, selected-source badge and day detail;
+this is not a full accessibility audit. Final light/dark desktop and dark tablet/
+mobile screenshots were visually inspected, along with earlier light mobile.
+No claim of matching an unavailable approved design reference is made.
+
+Six actual final PNGs are generated under ignored frontend/test-results folders:
+
+| View | Directory suffix under frontend/test-results | Files |
+|---|---|---|
+| Desktop | history-real-history-value-469d1--and-responsive-screenshots-history-desktop | history-light.png, history-dark.png |
+| Tablet | history-real-history-value-469d1--and-responsive-screenshots-history-tablet | history-light.png, history-dark.png |
+| Mobile | history-real-history-value-469d1--and-responsive-screenshots-history-mobile | history-light.png, history-dark.png |
+
+Generated screenshots/reports/dist/node_modules/caches remain ignored. No server
+is published; test-owned server cleanup and port status are checked at completion.
+The build contains local compiled assets only; it is not FIS-002 release packaging.
+All fifteen exact direct pins and the existing lockfile remain unchanged. Lockfile
+SHA-256: `8f2a864278789887a3be38933447a92f47156cd560e887796f6ca8c5f4416ccb`.
+
+### Security dispositions, inventory and remaining risks
+
+The first eight tracked leads are the same four expressions in index and working copy:
+api/config.py:30 is a SecretStr declaration without a credential value;
+api/providers.py:86 binds a runtime server argument without an embedded endpoint;
+api/providers.py:89 binds an injected SecretStr without embedded value/logging;
+frontend/e2e/dashboard.spec.ts:14 compares hostname to loopback values and is a
+heuristic match. The ninth lead is docs/PROJECT_STATE.md, working tree line 82,
+under database-endpoint-assignment. Its cause is the Playwright option spelling
+on that line: the heuristic matches the suffix of the option name before the
+equals sign. This documents disabling reuse of existing test servers, not a SQL
+endpoint or credential. Disposition: benign test-configuration documentation;
+retain the evidence and scanner rules unchanged. All nine are explicitly resolved,
+with zero confirmed violations or unresolved manual findings. Five new
+frontend/test files have zero extra leads.
+Scanner rules are unchanged; future approved staging still needs a post-staging
+scan. This is not a vulnerability-database or full-history audit.
+
+Changed frontend files: playwright.config.ts; vite.config.ts; src/App.tsx;
+src/ReadinessPanels.tsx; src/api.ts; src/styles.css; src/tokens.css;
+src/test/fixtures.ts; src/HistoricalTrends.tsx; src/history.test.tsx;
+src/test/historyFixtures.ts; e2e/history.spec.ts; e2e/history_backend.py.
+Documentation: README.md, docs/HISTORY_API.md, docs/PROJECT_STATE.md,
+docs/RELEASE_GATES.md and docs/TASKS.md. Eighteen files total, all left unstaged.
+
+### Final corrections after recovery audit
+
+Only three existing task files changed in this follow-up: src/styles.css under
+frontend, this PROJECT_STATE and RELEASE_GATES. The CSS change is one dark-only
+rule selecting native appearance and removing the dark custom background image.
+The existing dark color scheme supplies a legible native select chevron; light
+selectors and dashboard logic/contracts remain unchanged. No refactor or new
+feature was introduced. The ninth scanner disposition above corrects the earlier
+eight-lead documentation without removing evidence or modifying scanner rules.
+
+Fresh executed checks, each exit 0:
+
+| Actual follow-up command/check | Actual result |
+|---|---|
+| `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run build` from frontend | TypeScript/Vite PASS; 19 modules; JS 243.16 kB, CSS 15.87 kB, HTML 0.57 kB |
+| Same npm prefix, `run test:e2e -- --project=history-desktop --project=history-tablet --project=history-mobile --grep "real history values"` | **3/3 affected browser cases passed**, 43.6 s, no retries; both themes exercised in each case |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | Mandatory final engineering gate: **139 passed**, 0 failures/errors/skips, 67.937 s |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | **56 tracked files**, 0 confirmed violations, **9 manual leads**, all dispositioned; REVIEW REQUIRED, exit 0 |
+| Final screenshot freshness/ignore/port checks | **6/6 PNGs regenerated after final CSS**, all ignored; 8000/8001/5173/5174 free |
+
+The final CSS write was 13:45:32 UTC on 2026-11-21; screenshots were regenerated
+13:46:11..13:46:19 UTC. Thus all six (light/dark desktop, tablet and mobile)
+reflect final application source. New dark desktop/mobile screenshots were also
+visually inspected and show the native light chevrons clearly. Screenshot paths
+are unchanged in the table above. The unaffected 61 Vitest, full 27 Playwright,
+134 portable and 12 harness results are retained prior evidence, not newly claimed
+reruns in this CSS-only follow-up. Final source/decision/pin and whitespace/index
+checks remain mandatory, with no staging or publication authorized.
+
+Deferred: authentication/authorization; full accessibility/assistive-technology
+audit; independent customer design validation; production load/TLS/multi-worker
+and actual SQL acceptance; FastAPI static asset serving; FIS-002 clean isolated
+offline release/package/rollback acceptance; helicopter imagery; ML/prediction,
+maintenance drilldowns and cloud deployment. Mobile plot/table use local scrolling;
+theme preference resets per session. Unsupported-history detection relies on the
+existing synthetic 404 convention, not a new capability endpoint. No packages,
+operational data, SQL, source security settings, training, forecast or deployment
+were introduced. No commit, push, merge, staging or packaging was performed.
+
 ## Phase 03B-2B Task 1 historical series review — 2026-11-21 (Asia/Dubai)
 
 Branch: `feature/phase03b2b-history-dashboard`; clean starting HEAD:

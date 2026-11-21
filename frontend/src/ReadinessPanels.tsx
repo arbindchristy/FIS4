@@ -1,4 +1,5 @@
 import { STATUSES, type Dashboard } from './api';
+import type { ReactNode } from 'react';
 
 const percentage = (value: number) => `${value.toFixed(1)}%`;
 const count = (value: number) => value.toLocaleString('en-GB');
@@ -7,7 +8,7 @@ const statusNames: Record<string, string> = {
   NMCS: 'Non-mission capable · supply', NMCM: 'Non-mission capable · maintenance', DEPOT: 'Depot maintenance',
 };
 
-export function ReadinessPanels({ data }: { data: Dashboard }) {
+export function ReadinessPanels({ data, children }: { data: Dashboard; children?: ReactNode }) {
   const metrics = data.fleet.metrics;
   const counts = [
     ['Total tails', metrics.total_tails], ['FMC', metrics.fmc_tails], ['PMC', metrics.pmc_tails],
@@ -36,6 +37,7 @@ export function ReadinessPanels({ data }: { data: Dashboard }) {
         <h2>{label}</h2><p>{count(value)}</p>{label === 'PMC' ? <span>PMCM + PMCS</span> : null}
       </article>)}
     </section>
+    {children}
     <div className="report-grid">
       <section className="panel command-panel" aria-labelledby="command-heading">
         <div className="panel-heading"><div><p className="eyebrow">READINESS BY COMMAND</p><h2 id="command-heading">Command comparison</h2></div><span className="panel-meta">{data.fleet.command ? `Command ${data.fleet.command}` : 'All commands'}</span></div>
@@ -45,15 +47,17 @@ export function ReadinessPanels({ data }: { data: Dashboard }) {
             <div className="command-title"><h3>Command {row.command}</h3><span>{count(row.total_tails)} tails</span></div>
             <div className="meter-row"><label htmlFor={`svc-${row.command}`}>Serviceability</label><meter id={`svc-${row.command}`} min="0" max="100" value={row.svc_pct}>{percentage(row.svc_pct)}</meter><strong>{percentage(row.svc_pct)}</strong></div>
             <div className="meter-row availability"><label htmlFor={`avail-${row.command}`}>Availability</label><meter id={`avail-${row.command}`} min="0" max="100" value={row.avail_pct}>{percentage(row.avail_pct)}</meter><strong>{percentage(row.avail_pct)}</strong></div>
+            <dl className="command-counts">{[['FMC', row.fmc_tails], ['PMC', row.pmc_tails], ['NMCS', row.nmcs_tails], ['NMCM', row.nmcm_tails], ['DEPOT', row.depot_tails]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
           </article>)}
         </div>
       </section>
       <section className="panel status-panel" aria-labelledby="status-heading">
         <div className="panel-heading"><div><p className="eyebrow">AIRCRAFT CONDITION</p><h2 id="status-heading">Status distribution</h2></div><span className="panel-meta">{count(data.distribution.total_tails)} tails</span></div>
+        <div className="composition-bar" role="img" aria-label="Readiness composition for the reporting snapshot">{statuses.map(row => <span key={row.status} className={`composition-${row.status.toLowerCase()}`} style={{ width: `${row.pct}%` }} title={`${row.status}: ${row.count}`} />)}</div>
         <ul className="status-list">
           {statuses.map(row => <li key={row.status} className="status-row" aria-label={`${row.status} status`}>
             <div className="status-label"><span className={`status-code status-${row.status.toLowerCase()}`}>{row.status}</span><span>{statusNames[row.status] ?? 'Unmapped status'}</span><strong>{count(row.count)}<small> tails</small></strong></div>
-            <div className="status-track" aria-hidden="true"><span style={{ width: `${row.pct}%` }} /></div><span className="status-percentage">{percentage(row.pct)}</span>
+            <span className="status-percentage">{percentage(row.pct)}</span>
           </li>)}
         </ul>
       </section>

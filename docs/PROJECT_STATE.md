@@ -1,5 +1,126 @@
 # FIS4 project state
 
+## Phase 03B-2B Task 1 historical series review — 2026-11-21 (Asia/Dubai)
+
+Branch: `feature/phase03b2b-history-dashboard`; clean starting HEAD:
+`9ac0f9aa7fc3243438363113ce920469344f3b8f`, Phase 03B-2A merged through PR #5.
+No remote query was required. This section supersedes older pending Phase 03B-2A
+publication statuses; earlier evidence remains historical. FIS-001/FIS-002,
+readiness engine, simulator algorithm, original Python regression tests, provider
+configuration/SQL implementation, dependencies and frontend are unchanged.
+
+### Implemented behavior and reviewed scope
+
+New `GET /api/v1/readiness/history/series` is registered only for explicitly
+selected synthetic_history mode. It requires end_date and a canonical days value
+30/90/180/365, with optional provider-allowlisted command. End is inclusive and
+must be within history; start clips to available history. Effective start/end,
+requested window and actual point count are returned. Each chronological daily
+observation contains existing Metrics plus six canonical status counts preserving
+PMCM/PMCS separately. Counts and percentages reference existing frozen records;
+no readiness formula, generation, snapshots, pandas aggregation or event loading
+is performed in requests. The range reader captures one consistent immutable
+cache reference, performs at most 365 lookups and retains no new cache entries.
+
+New response models bound observations/point_count to 1..365, and canonical counts
+to 0..160. The validated response is serialized once; its actual uncompressed JSON
+body is capped at **262,144 bytes (256 KiB)**. Overflow returns generic 500, never
+truncated data. Required/malformed/unknown/duplicate query values return safe 422,
+out-of-history end returns 404, absent/closed/internally incomplete cache returns
+503 with no partial series. Existing error/source conventions are reused.
+Default CSV and SQL providers do not expose the route or initialize synthetic
+history. All existing endpoint implementations/contracts remain unchanged.
+
+Exact API/model/error conventions and examples are appended to HISTORY_API.md.
+Reviewed files: api/history.py; api/main.py; tests/test_history_series.py;
+scripts/benchmark_history_series.py; tests/test_engineering_harness.ps1;
+docs/HISTORY_API.md; docs/PROJECT_STATE.md; docs/RELEASE_GATES.md; docs/TASKS.md.
+Only expected totals/labels change in the engineering harness; its original
+twelve scenarios and security rules are retained. No frontend work was started.
+
+### Executed verification
+
+Existing FIS4 .venv / CPython 3.13.7 Windows x64 and exact requirements pins were
+reused, without packages, internet, operational data or SQL access. Commands ran
+from C:\AI\Projects\FIS4. Completed checks below exited **0**. Existing pandas
+inference and Starlette HTTPX adapter advisories remain non-blocking; no package
+changes or warning suppression were introduced.
+Local importlib.metadata confirmed FastAPI 0.164.0, Pydantic 2.14.3,
+pandas 2.3.3, NumPy 2.3.4, HTTPX 0.28.1 and Uvicorn 0.54.0; no versions changed.
+
+| Actual command / check | Actual result |
+|---|---|
+| `.\.venv\Scripts\python.exe -B -m unittest discover -s tests -p test_history_series.py -v` | **19/19 passed**, 17.458 s |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **139 passed**, 0 failures/errors/skips, 59.824 s; all original 120 plus 19 new series tests |
+| Same verify command with `-TestMode Portable` | **134 passed**, 0 failures/errors/skips, 58.894 s; same five external legacy-reference tests excluded |
+| `powershell.exe -NoProfile -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **12/12 passed**; all original scenarios preserved, counts extended to 139/134 |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | 54 tracked files; 0 confirmed violations; eight existing reviewed leads; REVIEW REQUIRED, exit 0 |
+| Inline existing-scanner Inspect-Text AST extraction, exact two-file untracked allowlist, link/size/plaintext and trailing-whitespace checks | Both new files scanned, 0 manual leads; exit 0; no index modifications |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --exit-code 9ac0f9a -- AGENTS.md docs/DECISIONS.md readiness.py simulator api/config.py api/providers.py tests/test_readiness.py tests/test_api.py tests/test_providers.py tests/test_history_api.py tests/test_simulator.py tests/legacy_reference.py tests/suite_selection.py scripts/verify.ps1 scripts/security_check.ps1 requirements.txt frontend data/synthetic_readiness.csv TEST_REPORT.md` | All protected decisions/logic, original regressions, default/SQL paths, frontend and dependencies unchanged |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --check` | PASS; untracked file whitespace checked separately |
+
+Nineteen tests cover all windows, inclusive/clipped boundaries, every-day fleet/
+command reconciliation for every window, exact cached metrics and FIS-001 (NMCM
+retained), separate six-status counts, strict and duplicate/encoded query keys,
+default/SQL/override isolation, unavailable/incomplete cache, immutable results,
+concurrent/repeated reads, schema/read-only behavior and exact payload-limit
+boundaries. Warm tests patch simulator generation, preparation, event loading,
+readiness snapshot/metric functions and DataFrame.groupby to fail on invocation.
+One real validated full world is prepared for the series test module; individual
+tests use defensive copies of its existing immutable-cache fixture.
+
+### Measured warm response sizes and timings
+
+Actual command, exit 0:
+
+```powershell
+.\.venv\Scripts\python.exe -B scripts\benchmark_history_series.py --requests 30
+```
+
+Real history-mode lifespan initialization ran once, separately measured **18.422 s**
+(clock starts after app construction/imports). It is excluded from warm timings.
+As-of 2026-11-20, seed 42017; one untimed request per selection followed by 30
+sequential timed requests per row (240 total). Body sizes were identical across
+repetitions of each selection; exact UTF-8 JSON bytes, excluding headers:
+
+| Days / points | Command | Body bytes | Mean ms | Median ms | Min..max ms |
+|---:|---|---:|---:|---:|---:|
+| 30 | fleet | 7,227 | 4.160 | 3.853 | 3.248..6.581 |
+| 30 | FICTIONAL_A | 7,028 | 10.684 | 9.715 | 3.378..27.495 |
+| 90 | fleet | 21,422 | 16.273 | 13.523 | 8.960..43.920 |
+| 90 | FICTIONAL_A | 20,787 | 12.577 | 9.865 | 4.794..31.338 |
+| 180 | fleet | 42,837 | 11.055 | 10.784 | 6.697..17.792 |
+| 180 | FICTIONAL_A | 41,191 | 10.186 | 8.923 | 6.269..44.297 |
+| 365 | fleet | 86,839 | 10.334 | 10.126 | 7.379..15.983 |
+| 365 | FICTIONAL_A | 83,539 | 14.480 | 12.225 | 7.895..27.142 |
+
+These are local in-process TestClient/ASGI/thread dispatch/validation/JSON timings,
+with normal host/scheduling variability, not monotonic size-to-latency guarantees.
+They do not measure TCP/TLS, external clients, production authorization, concurrent
+load or multi-worker deployment. No new memory/RSS benchmark was performed in
+this task. Request work and payload have explicit bounds; prior initialization
+memory measurements above/below are historical evidence, not new results.
+
+### Security disposition and stop boundary
+
+The eight tracked manual leads are four expressions in index and working tree:
+api/config.py:30 declares SecretStr without an embedded credential;
+api/providers.py:86 binds a runtime server argument without an embedded endpoint;
+api/providers.py:89 binds injected SecretStr without embedded value/logging;
+frontend/e2e/dashboard.spec.ts:14 checks loopback hostname equality, a heuristic
+match. All eight are explicitly resolved; there are no confirmed violations or
+unresolved manual findings. The two new test/benchmark files have zero additional
+leads under unchanged text rules. Scanner policy is unchanged. Future staging
+still requires an index/working-tree scan; no vulnerability-database or full Git
+history audit is claimed.
+
+Remaining risks: authentication/authorization absent, real network/concurrent-load/
+TLS/multi-worker capacity unverified, per-worker cold generation/cache lifecycle
+and FIS-002 isolated offline release acceptance deferred. No SQL access, external
+services, packages, ML/prediction, simulator changes, frontend, deployment or
+packaging was introduced. All nine reviewed files remain **unstaged**; no commit,
+push or merge. Proposed commit: `FIS4 Phase 03B-2B Task 1: bounded historical trend API`.
+
 ## Phase 03B-2A historical API local review — 2026-11-21 (Asia/Dubai)
 
 Branch `feature/phase03b2-history-api` starts clean at

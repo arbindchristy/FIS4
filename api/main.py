@@ -28,6 +28,13 @@ class HistoricalSelection(Selection):
     date: Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")]
 
 
+class SeriesSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    end_date: Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")]
+    days: Literal["30", "90", "180", "365"]
+    command: Annotated[str | None, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9_-]+$")] = None
+
+
 class Metrics(BaseModel):
     total_tails: int = Field(ge=0)
     fmc_tails: int = Field(ge=0)
@@ -51,6 +58,33 @@ class Metadata(BaseModel):
 
 class FleetResponse(Metadata):
     metrics: Metrics
+
+
+class CanonicalStatusCounts(BaseModel):
+    FMC: int = Field(ge=0, le=160)
+    PMCM: int = Field(ge=0, le=160)
+    PMCS: int = Field(ge=0, le=160)
+    NMCS: int = Field(ge=0, le=160)
+    NMCM: int = Field(ge=0, le=160)
+    DEPOT: int = Field(ge=0, le=160)
+
+
+class HistoryObservation(Metrics):
+    date: date
+    status_counts: CanonicalStatusCounts
+
+
+class HistorySeriesResponse(BaseModel):
+    source: Literal["synthetic"] = "synthetic"
+    command: str | None = None
+    requested_days: Literal[30, 90, 180, 365]
+    start_date: date
+    end_date: date
+    point_count: int = Field(ge=1, le=365)
+    observations: list[HistoryObservation] = Field(min_length=1, max_length=365)
+
+
+MAX_SERIES_BYTES = 256 * 1024
 
 
 class CommandResponse(Metadata):
@@ -252,6 +286,38 @@ def create_app(config: Mapping | ProviderConfig | None = None, *,
                 raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
             return FleetResponse(source="synthetic", date=day, command=query.command,
                                  metrics=Metrics(**record.metrics()))
+
+        @app.get("/api/v1/readiness/history/series", response_model=HistorySeriesResponse,
+                 description="Cached chronological daily readiness; 30/90/180/365-day windows; JSON body at most 256 KiB.")
+        def historical_series(request: Request, query: Annotated[SeriesSelection, Query()],
+                              provider: Provider):
+            if not isinstance(provider, SyntheticHistoryProvider):
+                raise HTTPException(404, "Historical readiness is not enabled")
+            if any(len(request.query_params.getlist(key)) != 1 for key in request.query_params):
+                raise HTTPException(422, "Invalid request parameters")
+            try:
+                end_date = date.fromisoformat(query.end_date)
+            except ValueError:
+                raise HTTPException(422, "end_date must be a valid YYYY-MM-DD calendar date") from None
+            if query.command is not None and query.command not in provider.commands:
+                raise HTTPException(422, "Invalid historical command")
+            try:
+                series = provider.read_series(end_date, int(query.days), query.command)
+            except KeyError:
+                raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
+            body = HistorySeriesResponse(command=query.command, requested_days=int(query.days),
+                                         start_date=series.start, end_date=series.end,
+                                         point_count=len(series.points),
+                                         observations=[HistoryObservation(
+                                             date=day, **record.metrics(),
+                                             status_counts=CanonicalStatusCounts(**dict(zip(
+                                                 readiness.CANONICAL_STATUSES, record.statuses))))
+                                             for day, record in series.points])
+            # Validate via the model, serialize once, and enforce a hard byte ceiling.
+            response = JSONResponse(content=body.model_dump(mode="json"))
+            if len(response.body) > MAX_SERIES_BYTES:
+                raise HTTPException(500, "Internal server error")
+            return response
 
     return app
 

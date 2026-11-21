@@ -1,6 +1,6 @@
 """Lifecycle-owned synthetic history; immutable aggregates and no request-time pandas."""
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from threading import Lock
 from types import MappingProxyType
 from typing import Literal, Mapping
@@ -13,6 +13,7 @@ from api.config import HistorySettings
 
 METRIC_FIELDS = ("total_tails", "fmc_tails", "pmc_tails", "nmcm_tails", "nmcs_tails",
                  "depot_tails", "svc_pct", "avail_pct")
+SERIES_WINDOWS = (30, 90, 180, 365)
 
 
 class HistoryUnavailable(RuntimeError):
@@ -43,6 +44,13 @@ class HistoryCache:
     commands: tuple[str, ...]
     records: Mapping[tuple[date, str | None], DailyReadiness]
     events: pd.DataFrame  # Private to the provider; only copied through load_events.
+
+
+@dataclass(frozen=True)
+class ReadinessSeries:
+    start: date
+    end: date
+    points: tuple[tuple[date, DailyReadiness], ...]
 
 
 def prepare_history(settings: HistorySettings) -> HistoryCache:
@@ -126,6 +134,24 @@ class SyntheticHistoryProvider:
     def read(self, day: date, command: str | None = None) -> DailyReadiness:
         # No generation, snapshot construction, aggregation or mutable cache result.
         return self._ready().records[(day, command)]
+
+    def read_series(self, end_date: date, days: int, command: str | None = None) -> ReadinessSeries:
+        if type(end_date) is not date or type(days) is not int or days not in SERIES_WINDOWS:
+            raise ValueError("Invalid series selection")
+        cache = self._ready()  # One consistent immutable cache reference, even during shutdown.
+        if command is not None and command not in cache.commands:
+            raise ValueError("Invalid series command")
+        if not cache.start <= end_date <= cache.end:
+            raise KeyError("Series end outside history")
+        start = max(cache.start, end_date - timedelta(days=days - 1))
+        points = []
+        for offset in range((end_date - start).days + 1):
+            day = start + timedelta(days=offset)
+            record = cache.records.get((day, command))
+            if record is None:
+                raise HistoryUnavailable()  # Reject incomplete periods; never silently skip a day.
+            points.append((day, record))
+        return ReadinessSeries(start, end_date, tuple(points))
 
     def load_events(self) -> pd.DataFrame:
         return self._ready().events.copy(deep=True)

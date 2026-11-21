@@ -36,7 +36,10 @@
 | Phase 03B Task 1 verification | Passed | 98 full / 93 portable tests (original 79/74 preserved); 19 new tests; 12 harness checks; security findings dispositioned in PROJECT_STATE |
 | Phase 03B-2A history provider/API | Implemented; local review | Explicit history mode, lifespan prepare-once cache, new history GET; old contracts/default/SQL paths preserved; docs/HISTORY_API.md |
 | Phase 03B-2A tests/performance | Verified locally | 120 full / 115 portable tests; cold/warm/memory evidence in PROJECT_STATE; final harness/security dispositions recorded there |
-| Phase 03B-2A publication | Not authorized | All changes unstaged; no commit, push, merge or deployment |
+| Phase 03B-2A publication | Merged through PR #5; locally verified | Current starting HEAD 9ac0f9aa7fc3243438363113ce920469344f3b8f; earlier pending status superseded |
+| Phase 03B-2B Task 1 trend API | Implemented; local review | History-only GET series, bounded windows, six-status daily observations, strict validation, payload limit; no frontend changes |
+| Phase 03B-2B Task 1 verification | Local evidence recorded | 139 full / 134 portable tests; 19 new tests; all-window response sizes/timings and harness/security outcomes in PROJECT_STATE |
+| Phase 03B-2B Task 1 publication | Not authorized | Nine reviewed files remain unstaged; no commit, push, merge or deployment |
 | Rule-based / ML prediction | Not started | Future-only feature boundary documented; no targets, training, inference or prediction API |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 

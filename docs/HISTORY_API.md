@@ -161,3 +161,111 @@ benchmarks. Profiling reports Python allocation peak and current allocations
 after startup/GC, not OS working set/RSS or all native allocations. It includes
 lazy simulator imports/retained Python state and adds timing overhead. See current
 PROJECT_STATE for actual numbers, commands, security findings and deferred risks.
+
+## Phase 03B-2B Task 1: bounded daily series
+
+`GET /api/v1/readiness/history/series?end_date=YYYY-MM-DD&days=30[&command=FICTIONAL_A]`
+
+This additional read-only route is registered only for explicitly selected
+`synthetic_history` mode. Existing routes, configuration, source enum, lifecycle
+initialization and CSV/SQL isolation are unchanged. No frontend code is modified.
+
+| Parameter | Strict contract |
+|---|---|
+| end_date | Required exact YYYY-MM-DD, real calendar date within generated history; inclusive |
+| days | Required canonical query string `30`, `90`, `180` or `365` only; response reports an integer |
+| command | Optional provider-allowlisted fictional command; omitted means fleet |
+
+Leading zeros (`030`), signs, whitespace, decimals, booleans and unsupported
+windows are rejected. Unknown keys and duplicates are rejected, including repeated
+identical values and percent-encoded key aliases. No untrusted values are echoed.
+
+Effective start = later of history start and end_date minus (days - 1) calendar
+days. The end is never clipped: an end outside generated history returns 404.
+There is one observation per calendar day, chronological, with no downsampling,
+gaps, averages, predictions or interpolation. A clipped period may have fewer
+points than requested; requesting the first history day returns exactly one.
+
+### Response model
+
+`HistorySeriesResponse` contains:
+
+| Field | Meaning / bounds |
+|---|---|
+| source | Literal `synthetic` |
+| command | Selected fictional command or null |
+| requested_days | Integer enum 30/90/180/365 |
+| start_date, end_date | Effective inclusive ISO dates |
+| point_count | Actual observation count, 1..365; equals effective calendar span |
+| observations | Chronological array, 1..365 `HistoryObservation` objects |
+
+Each `HistoryObservation` contains `date`, all existing `Metrics` fields
+(`total_tails`, `fmc_tails`, `pmc_tails`, `nmcs_tails`, `nmcm_tails`, `depot_tails`,
+`svc_pct`, `avail_pct`), plus `status_counts`. `status_counts` is a required
+`CanonicalStatusCounts` object with integer fields `FMC`, `PMCM`, `PMCS`, `NMCS`,
+`NMCM`, `DEPOT`, each 0..160. Zero counts are retained. PMC is PMCM + PMCS;
+canonical counts sum to total_tails (160 fleet or 40 for one command).
+Metrics/percentages come directly from the existing immutable DailyReadiness
+record; no readiness formula is implemented in the endpoint or range reader.
+
+The response model is constructed/validated before one JSONResponse serialization.
+The **uncompressed JSON body is capped at 262,144 bytes (256 KiB)**, excluding
+headers/transport overhead. The actual serialized length is checked before
+returning; a byte-limit breach is an internal 500, never a truncated success.
+At most 365 points and six canonical status counts per point are serialized.
+Model/schema changes must retain both the point and byte bounds. Actual measured
+payloads/timings for every window are recorded in PROJECT_STATE, not extrapolated
+from a single size. OpenAPI describes the response and shared error schemas.
+
+```powershell
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/readiness/history/series?end_date=2026-11-20&days=30'
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/readiness/history/series?end_date=2026-11-20&days=365&command=FICTIONAL_A'
+# Clipped at the example history's first day: 11 points, 2022-11-21..2022-12-01.
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/readiness/history/series?end_date=2022-12-01&days=90'
+```
+
+### Cache and error behavior
+
+`read_series(end_date, days, command)` captures one ready cache reference and
+performs at most 365 dictionary lookups. It returns a frozen ReadinessSeries
+containing dated references to existing frozen DailyReadiness records. It does
+not generate, load events, copy history frames, run pandas aggregation or retain
+additional per-query cache entries. An in-flight read can finish from its captured
+immutable cache while shutdown releases the provider reference. Missing any
+required internal day rejects the whole series with safe 503, never a partial
+period. FIS-001, including NMCM in the denominator and zero guards, remains in
+the original preparation engine. FIS-002 single-codebase/offline constraints apply.
+
+| Outcome | Response |
+|---|---|
+| Valid inclusive/clipped selection | 200 HistorySeriesResponse |
+| End outside generated history | 404, existing no-synthetic-snapshot detail |
+| Missing/invalid/unknown/duplicate query parameter | 422, generic validation detail or fixed safe date/command detail |
+| Cache absent, closed or internally incomplete | 503, `Synthetic history unavailable` |
+| CSV/SQL mode or non-history dependency override | 404; no history data, regeneration or SQL access |
+| Unexpected failure / oversized serialized body | 500, `Internal server error` |
+| Unsupported HTTP method | 405 |
+
+Errors reuse ErrorResponse and X-FIS4-Data-Source conventions; no query/exception
+contents are returned. Authentication/authorization, production socket/load/TLS,
+multi-worker memory/availability and offline release acceptance remain deferred.
+
+### Tests and reproducible measurement
+
+Nineteen new portable tests in `tests/test_history_series.py` cover all windows,
+clipping/boundaries, daily reconciliation, exact cached metrics and FIS-001,
+strict input validation, source isolation, unavailable/incomplete cache, payload
+limits, immutable results and concurrent requests. Warm-path tests forbid
+generation, event loading, snapshot construction and DataFrame.groupby.
+
+```powershell
+.\.venv\Scripts\python.exe -B -m unittest discover -s tests -p test_history_series.py -v
+.\.venv\Scripts\python.exe -B scripts\benchmark_history_series.py --requests 30
+```
+
+The benchmark initializes the real application/history once, excludes one untimed
+request per selection, then measures 30 sequential warm requests for each window
+at fleet and FICTIONAL_A levels. Sizes are exact `len(response.content)` JSON bytes;
+all responses for the same selection must have identical sizes. Timings include
+in-process TestClient/ASGI/thread dispatch/model validation/JSON serialization;
+they are not network/TCP/TLS, concurrent-load or production latency guarantees.

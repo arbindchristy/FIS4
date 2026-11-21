@@ -1,5 +1,26 @@
 # FIS4 release gates
 
+## Phase 03B-2B Task 1 historical trend API local acceptance
+
+| Gate | Actual evidence / boundary |
+|---|---|
+| Baseline / formulas | feature/phase03b2b-history-dashboard at 9ac0f9a; FIS-001/FIS-002, simulator and readiness engine unchanged |
+| Additive contract | One GET history/series route, history mode only; existing endpoints/default provider/SQL implementation and original regression tests unchanged |
+| Bounded windows | Required inclusive end in history, canonical 30/90/180/365 days, provider-allowlisted command, clipped start and actual point_count |
+| Complete daily observations | Chronological cached metrics plus all six status counts; PMCM/PMCS separate; every-day fleet/command reconciliation and FIS-001 verified |
+| Warm cache only | At most 365 dictionary lookups on one immutable cache reference; no generation, snapshot, event loading, pandas aggregation or growing query cache |
+| Validation / failure | Unknown/duplicate/invalid keys rejected without echo; outside end 404; unavailable/incomplete cache 503 with no partial data |
+| Payload | 1..365 observations; hard 262,144-byte uncompressed JSON cap checked after model validation/serialization; generic 500 on overflow, no truncation |
+| Regression | 139 full / 134 portable tests pass, all original 120/115 retained; five external-reference exclusions unchanged; 19 new series tests |
+| Harness / security | Original **12/12 harness scenarios pass** with extended counts; scanner exits 0, 0 violations, eight existing leads dispositioned; both new files explicitly scanned, no leads |
+| Performance | All four windows x fleet/command x 30 warm TestClient requests measured; exact sizes/mean/median/range and transport limitations recorded in PROJECT_STATE |
+| Scope / publication | Frontend unchanged; no packages, SQL, internet, ML, forecasts, packaging or deployment; all changes unstaged, no commit/push/merge |
+
+This is local fictional-series acceptance, not production access-control/load/TLS
+or FIS-002 offline release acceptance. Authentication remains absent. No synthetic
+series access is registered for CSV or SQL modes, and incomplete history must
+never produce a silently shortened successful period.
+
 ## Phase 03B-2A historical readiness API local acceptance
 
 | Gate | Implemented / verified evidence |

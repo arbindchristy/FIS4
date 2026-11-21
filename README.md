@@ -2,6 +2,12 @@
 
 ## Phase 03B Task 1: offline fictional fleet simulator
 
+Phase 03B-2A adds an explicitly selected history provider and
+`GET /api/v1/readiness/history?date=YYYY-MM-DD&command=FICTIONAL_A` (command optional).
+See [historical API configuration and contract](docs/HISTORY_API.md). The default
+API still uses the small CSV fixture; history generation/aggregate preparation
+runs once at lifespan startup only when selected. No authentication is implemented.
+
 `simulator/` generates reproducible event/history tables and validated daily
 snapshots for 160 fictional tails across four commands and four calendar years.
 It is separate from the API/dashboard and uses the unchanged readiness engine.

@@ -1,5 +1,27 @@
 # FIS4 release gates
 
+## Phase 03B-2A historical readiness API local acceptance
+
+| Gate | Implemented / verified evidence |
+|---|---|
+| Baseline / decisions | feature/phase03b2-history-api at 37c8120; FIS-001/FIS-002 and original readiness implementation/tests unchanged |
+| Simulator preservation | Existing generation algorithm/contracts and 19 simulator tests unchanged; no blocking defect required alteration |
+| Explicit selection | Validated synthetic_history mode, required cutoff, fixed 160 tails/four commands/four years; default small CSV unchanged; SQL safeguards/settings isolated |
+| API compatibility | New versioned history route only in explicit history mode; FleetResponse/source/error conventions reused; existing endpoint models and default/SQL semantics unchanged |
+| Historical validation | Required real date, optional allowlisted command, unknown/duplicate keys rejected; inclusive coverage, 404 outside range, no fallback |
+| Lifecycle / cache | Worker-thread lifespan initialization, lock and atomic publication, immutable bounded aggregates, defensive event copies, shutdown cleanup, safe sticky failure |
+| Warm path | Dictionary reads only for historical and existing aggregates in history mode; patched generation/snapshot/metric functions prove no warm recomputation |
+| Regression | 120 full / 115 portable tests passed, retaining original 98/93 and all FIS-001 regressions; five external-reference exclusions unchanged |
+| Concurrency / isolation | Per-app initialization and HTTP concurrency tests, mutation protection, config/shutdown isolation; SQL/non-history route exposure rejected |
+| Performance evidence | Cold 13.299 s; three dates x fleet/command x 30 warm requests measured; separate Python memory profile; limitations in PROJECT_STATE |
+| Security / review | Tracked security scan exits 0 with eight existing resolved leads; all four new untracked files scanned with unchanged text rules, no additional leads; 12/12 harness checks pass |
+| Scope / publication | No new runtime packages, external services, real SQL, simulator algorithm changes, React, ML/prediction or packaging; all work unstaged, no commit/push/merge/deploy |
+
+Acceptance is local fictional API behavior, not authorization/access-control,
+production load/TLS, actual SQL or FIS-002 offline release acceptance. Authentication
+remains absent. Future deployment must enable lifespan and account for per-worker
+cold generation/memory; no request-time fallback or global mutable cache is allowed.
+
 ## Phase 03B Task 1 simulator review boundary
 
 | Gate | Evidence / disposition |

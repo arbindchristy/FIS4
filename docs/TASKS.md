@@ -32,9 +32,11 @@
 | Phase 03A security and staging | Complete; final staged review passed | 23 reviewed files staged; 44-file proposed/post-staging scans exit 0, 0 violations; all 8 source-expression leads resolved in PROJECT_STATE; generated artifacts excluded |
 | Phase 03A design references | Validation pending | No approved design reference found; new layout, no claimed visual match |
 | Phase 03A publication | Merged, locally verified | main/starting HEAD 25b1eaa5e8e464247d9b49e38c468d0aa03b9dd3 contains PR #3; prior review records are historical |
-| Phase 03B Task 1 fleet simulator | Implemented; unstaged review | 160 fictional tails, four commands, four years; persistent causal episodes, telemetry, existing-engine snapshots; docs/SIMULATOR.md |
+| Phase 03B Task 1 fleet simulator | Merged via PR #4; locally verified | Baseline 37c8120f5d6c08a6650f94141a71faf156784d16; 160 fictional tails/four commands/four years; algorithm unchanged in API task |
 | Phase 03B Task 1 verification | Passed | 98 full / 93 portable tests (original 79/74 preserved); 19 new tests; 12 harness checks; security findings dispositioned in PROJECT_STATE |
-| Phase 03B simulator API integration | Proposal only; not implemented | Prepare once and cache/index snapshots and approved aggregates; preserve existing endpoint contracts and provider bounds |
+| Phase 03B-2A history provider/API | Implemented; local review | Explicit history mode, lifespan prepare-once cache, new history GET; old contracts/default/SQL paths preserved; docs/HISTORY_API.md |
+| Phase 03B-2A tests/performance | Verified locally | 120 full / 115 portable tests; cold/warm/memory evidence in PROJECT_STATE; final harness/security dispositions recorded there |
+| Phase 03B-2A publication | Not authorized | All changes unstaged; no commit, push, merge or deployment |
 | Rule-based / ML prediction | Not started | Future-only feature boundary documented; no targets, training, inference or prediction API |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 

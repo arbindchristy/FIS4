@@ -1,6 +1,7 @@
 """Read-only aggregate API with explicitly configured, injectable event providers."""
 from datetime import date
 from collections.abc import Callable, Mapping
+from contextlib import asynccontextmanager
 from typing import Annotated, Literal
 
 import pandas as pd
@@ -9,16 +10,22 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.concurrency import run_in_threadpool
 
 import readiness
 from api.config import ProviderConfig, SqlCredentials, parse_config
 from api.providers import DataProvider, ProviderError, Source, create_provider
+from api.history import HistoryUnavailable, SyntheticHistoryProvider
 
 
 class Selection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     date: Annotated[str | None, Field(pattern=r"^\d{4}-\d{2}-\d{2}$")] = None
     command: Annotated[str | None, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9_-]+$")] = None
+
+
+class HistoricalSelection(Selection):
+    date: Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")]
 
 
 class Metrics(BaseModel):
@@ -83,22 +90,31 @@ def selected_provider(request: Request, provider: Annotated[DataProvider, Depend
 Provider = Annotated[DataProvider, Depends(selected_provider)]
 
 
-def get_snapshot(provider: Provider) -> pd.DataFrame:
+def get_snapshot(provider: Provider) -> pd.DataFrame | None:
+    if isinstance(provider, SyntheticHistoryProvider):
+        return None  # History mode serves precomputed records; never rebuild a snapshot.
     events = provider.load_events()
     return readiness.build_tail_daily_snapshot(readiness.coalesce_columns(events))
 
 
 def selected_snapshot(
     query: Annotated[Selection, Query()],
-    snapshot: Annotated[pd.DataFrame, Depends(get_snapshot)],
+    snapshot: Annotated[pd.DataFrame | None, Depends(get_snapshot)],
     provider: Provider,
-) -> tuple[pd.DataFrame, date, str | None]:
+) -> tuple[pd.DataFrame | None, date, str | None]:
     requested = None
     if query.date is not None:
         try:
             requested = date.fromisoformat(query.date)
         except ValueError:
             raise HTTPException(422, "date must be a valid YYYY-MM-DD calendar date") from None
+    if isinstance(provider, SyntheticHistoryProvider):
+        day = requested or provider.end
+        try:
+            provider.read(day, query.command)
+        except KeyError:
+            raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
+        return None, day, query.command
     if snapshot.empty:
         raise HTTPException(404, f"No {provider.source} snapshot available")
     day = requested or snapshot["date"].max().date()
@@ -110,14 +126,26 @@ def selected_snapshot(
     return selected, day, query.command
 
 
-Selected = Annotated[tuple[pd.DataFrame, date, str | None], Depends(selected_snapshot)]
+Selected = Annotated[tuple[pd.DataFrame | None, date, str | None], Depends(selected_snapshot)]
 
 
 def create_app(config: Mapping | ProviderConfig | None = None, *,
                credentials: SqlCredentials | None = None,
                connection_factory: Callable | None = None) -> FastAPI:
     provider = create_provider(parse_config(config), credentials, connection_factory)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        if isinstance(provider, SyntheticHistoryProvider):
+            await run_in_threadpool(provider.initialize)
+        try:
+            yield
+        finally:
+            if isinstance(provider, SyntheticHistoryProvider):
+                await run_in_threadpool(provider.close)
+
     app = FastAPI(title="FIS4 readiness", version="0.3.0",
+                  lifespan=lifespan,
                   description="Explicit event providers; FIS-001 formulas. SQL acceptance is mocked only.",
                   responses={code: {"model": ErrorResponse} for code in (404, 422, 500, 503)})
     app.state.provider = provider
@@ -139,6 +167,10 @@ def create_app(config: Mapping | ProviderConfig | None = None, *,
     @app.exception_handler(ProviderError)
     async def provider_error(request: Request, error: ProviderError):
         return error_response(request, 503, "SQL data unavailable")
+
+    @app.exception_handler(HistoryUnavailable)
+    async def history_error(request: Request, error: HistoryUnavailable):
+        return error_response(request, 503, "Synthetic history unavailable")
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, error: StarletteHTTPException):
@@ -164,18 +196,31 @@ def create_app(config: Mapping | ProviderConfig | None = None, *,
     @app.get("/api/v1/readiness/fleet", response_model=FleetResponse)
     def fleet(selection: Selected, provider: Provider):
         snapshot, day, command = selection
-        metrics = readiness.compute_jac_daily_metrics(snapshot).to_dict("records")[0]
+        metrics = (provider.read(day, command).metrics() if isinstance(provider, SyntheticHistoryProvider)
+                   else readiness.compute_jac_daily_metrics(snapshot).to_dict("records")[0])
         return FleetResponse(source=provider.source, date=day, command=command, metrics=Metrics(**metrics))
 
     @app.get("/api/v1/readiness/commands", response_model=CommandResponse)
     def commands(selection: Selected, provider: Provider):
         snapshot, day, command = selection
-        rows = readiness.compute_command_latest_metrics(snapshot, day).to_dict("records")
+        if isinstance(provider, SyntheticHistoryProvider):
+            rows = [{"command": code, **provider.read(day, code).metrics()}
+                    for code in ((command,) if command is not None else provider.commands)]
+        else:
+            rows = readiness.compute_command_latest_metrics(snapshot, day).to_dict("records")
         return CommandResponse(source=provider.source, date=day, command=command, commands=rows)
 
     @app.get("/api/v1/status-distribution", response_model=DistributionResponse)
     def distribution(selection: Selected, provider: Provider):
         snapshot, day, command = selection
+        if isinstance(provider, SyntheticHistoryProvider):
+            record = provider.read(day, command)
+            return DistributionResponse(source=provider.source, date=day, command=command,
+                                        total_tails=record.total_tails,
+                                        statuses=[StatusCount(status=code, count=count,
+                                                              pct=count / record.total_tails * 100)
+                                                  for code, count in zip(readiness.CANONICAL_STATUSES,
+                                                                         record.statuses)])
         counts = snapshot["status"].value_counts()
         total = int(snapshot["tail"].nunique())
         codes = list(readiness.CANONICAL_STATUSES)
@@ -184,6 +229,29 @@ def create_app(config: Mapping | ProviderConfig | None = None, *,
                                     statuses=[StatusCount(status=code, count=int(counts.get(code, 0)),
                                                           pct=int(counts.get(code, 0)) / total * 100)
                                               for code in codes])
+
+    if isinstance(provider, SyntheticHistoryProvider):
+        @app.get("/api/v1/readiness/history", response_model=FleetResponse,
+                 description="Explicit end-of-day synthetic readiness; history mode only. No authentication is implemented.")
+        def historical_readiness(request: Request, query: Annotated[HistoricalSelection, Query()],
+                                 provider: Provider):
+            # Dependency overrides/non-history providers cannot expose this cache.
+            if not isinstance(provider, SyntheticHistoryProvider):
+                raise HTTPException(404, "Historical readiness is not enabled")
+            if any(len(request.query_params.getlist(key)) != 1 for key in request.query_params):
+                raise HTTPException(422, "Invalid request parameters")
+            try:
+                day = date.fromisoformat(query.date)
+            except ValueError:
+                raise HTTPException(422, "date must be a valid YYYY-MM-DD calendar date") from None
+            if query.command is not None and query.command not in provider.commands:
+                raise HTTPException(422, "Invalid historical command")
+            try:
+                record = provider.read(day, query.command)
+            except KeyError:
+                raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
+            return FleetResponse(source="synthetic", date=day, command=query.command,
+                                 metrics=Metrics(**record.metrics()))
 
     return app
 

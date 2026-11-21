@@ -1,5 +1,139 @@
 # FIS4 project state
 
+## Phase 03B-2A historical API local review — 2026-11-21 (Asia/Dubai)
+
+Branch `feature/phase03b2-history-api` starts clean at
+`37c8120f5d6c08a6650f94141a71faf156784d16`, the locally verified Phase 03B-1
+simulator merge through PR #4. This section supersedes prior simulator publication
+and proposal-only API statuses; earlier records are retained as historical evidence.
+No remote access was needed. No simulator algorithm, FIS-001/FIS-002 text,
+readiness implementation, baseline Python tests, frontend or dependencies changed.
+
+### Implemented architecture and contracts
+
+Explicit `synthetic_history` provider mode requires validated history.as_of and
+optional strict seed (default 42017), with fixed 160 tails/four commands/four years.
+History and SQL settings cannot be mixed; both synthetic modes reject credentials
+or a connector. Default remains the original small CSV fixture. The new
+`GET /api/v1/readiness/history?date=YYYY-MM-DD[&command=FICTIONAL_A]` is registered
+only in history mode, reusing FleetResponse and existing safe-error conventions.
+Required/invalid dates, unknown/duplicate keys and invalid/unknown commands return
+422; dates outside history return 404. Source/header remain synthetic. CSV/SQL
+applications do not register/expose this route and do not initialize history.
+
+FastAPI lifespan initializes one per-app cache in a worker thread. A lock
+serializes initialization and atomically publishes immutable records. One real
+simulator world is generated/validated; the original daily metric function is
+called for fleet and each command subset during preparation. There are five
+records per day (7,305 in the example), with six canonical status counts. Large
+snapshot/telemetry/episode/action frames are released; private events are retained
+only for the defensive-copy DataProvider contract. No global/client-keyed cache.
+
+Existing aggregate endpoints preserve their contracts and default/SQL paths.
+When history is explicitly selected they use cached records instead of snapshot
+reconstruction or aggregation. Failure publishes no partial data, fails startup
+with generic HistoryUnavailable, and is sticky for that provider; no fixture
+fallback or request retry. Missing lifecycle/cache gives safe 503. Shutdown clears
+the cache; a fresh successful lifespan prepares once again. SQL logic/bounds and
+no-fallback safeguards are unchanged. `/health` is still liveness only.
+
+Provider contract, exact validation/status conventions, startup and example
+requests are documented in `HISTORY_API.md`. Authentication/authorization is not
+implemented and is not claimed by the new route; localhost demonstration remains
+separate from production access-control acceptance.
+
+### Executed verification evidence
+
+Existing FIS4 .venv, CPython 3.13.7 Windows x64, pandas 2.3.3 / NumPy 2.3.4,
+and the existing exact requirements pins were reused. No new packages/downloads,
+real SQL, external services or operational records. Commands run from FIS4.
+All completed checks below exited **0**; known pandas date-inference and
+Starlette TestClient/HTTPX adapter advisories remain non-blocking. No package
+installation or warning suppression was used.
+
+| Actual command / check | Result |
+|---|---|
+| `.\.venv\Scripts\python.exe -B -m unittest discover -s tests -p test_history_api.py -v` | 22/22 new tests passed; initial 14.368 s, final strengthened concurrency suite 13.744 s |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **120 passed**, 0 failures/errors/skips, 35.635 s; all original 98 plus 22 history tests |
+| Same verify command with `-TestMode Portable` | **115 passed**, 0 failures/errors/skips, 34.956 s; same five external legacy-reference tests excluded |
+| `powershell.exe -NoProfile -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **12/12 passed**; all original scenarios retained, counts extended to 120/115 |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | 50 tracked files; exit 0; 0 confirmed violations; 8 existing manual leads dispositioned below |
+| Inline existing-scanner Inspect-Text AST extraction, exact untracked-file allowlist and plaintext/size/link checks | **4/4 new files scanned**, 0 manual leads; whitespace check passed; no staging |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --exit-code 37c8120 -- AGENTS.md docs/DECISIONS.md readiness.py simulator tests/test_readiness.py tests/test_api.py tests/test_providers.py tests/test_simulator.py tests/legacy_reference.py tests/suite_selection.py data/synthetic_readiness.csv requirements.txt frontend TEST_REPORT.md` | Protected decisions/formulas, simulator algorithm/regressions, API baseline tests, dependencies and React unchanged |
+
+The tests cover default provider/OpenAPI preservation, exact population/date
+coverage, three-date fleet/command reconciliation, independent original-engine
+metric comparison with NMCM retained, strict date/command/query validation, single
+initialization, no warm generation/snapshot/aggregation, concurrent initialization
+and HTTP reads, read-only results, instance/config/shutdown isolation, restart,
+sticky safe initialization failure, missing lifespan, SQL isolation and provider
+override rejection. Full real data is prepared once per test suite; lifecycle
+tests clone immutable cache fixtures. Benchmarks below use real app generation.
+The final concurrency test additionally coordinates eight threads with a barrier
+and a blocked preparation event; all 22 history tests were rerun successfully
+after this test-only strengthening. A supplemental inline whitespace check first
+used a PowerShell-quoted character class incorrectly; its regex was corrected and
+the full untracked scan/check rerun successfully, without changing source content
+or weakening scanner rules.
+
+### Measured performance and memory
+
+Actual commands, both exit 0:
+
+```powershell
+.\.venv\Scripts\python.exe -B scripts\benchmark_history.py --requests 30
+.\.venv\Scripts\python.exe -B scripts\benchmark_history.py --requests 30 --profile
+```
+
+As-of 2026-11-20 / seed 42017: **13.299 s** cold construction/lifespan initialization
+including generation, validation and aggregate preparation. This excludes earlier
+interpreter/API imports. Warm in-process TestClient requests (30 per row, 180 total):
+
+| Historical date | Command | Mean ms | Median ms | Min..max ms |
+|---|---|---:|---:|---:|
+| 2022-11-21 | fleet | 4.078 | 3.695 | 3.021..7.713 |
+| 2022-11-21 | FICTIONAL_A | 5.751 | 5.442 | 3.873..12.093 |
+| 2024-11-20 | fleet | 7.931 | 7.487 | 3.113..14.730 |
+| 2024-11-20 | FICTIONAL_A | 4.624 | 3.769 | 2.844..10.126 |
+| 2026-11-20 | fleet | 4.520 | 3.833 | 2.793..9.032 |
+| 2026-11-20 | FICTIONAL_A | 3.289 | 3.135 | 2.596..5.695 |
+
+Separate tracemalloc run: **6,277,108 bytes retained (5.99 MiB)** after startup/GC,
+**185,198,043 bytes peak (176.62 MiB)**, including lazy simulator imports and other
+retained Python state. Profiled cold time **68.767 s** includes instrumentation
+overhead and is not the normal cold latency. Tracing was stopped before its warm
+requests. These are Python allocations, not OS RSS/working set or all native
+allocations. Warm measurements include ASGI/TestClient/thread/JSON overhead,
+not real TCP/TLS, access control, multi-worker or production load acceptance.
+
+### Security dispositions and deferred risks
+
+The scanner's eight leads represent four expressions in index and working copy:
+api/config.py:29 (index)/30 (working tree) declares SecretStr without a credential;
+api/providers.py:86 binds a runtime server argument without an embedded endpoint;
+api/providers.py:89 binds an injected SecretStr without embedded value/logging;
+frontend/e2e/dashboard.spec.ts:14 checks loopback hostname equality, a heuristic
+match. All are reviewed and resolved. No confirmed violations; scanner rules
+unchanged. New code has no secret/config discovery, external calls, live SQL,
+model use, persisted data or runtime CDN. Untracked files are explicitly scanned
+with existing text rules because the mandatory tracked scan excludes them.
+Post-staging scanning remains necessary if staging is later approved.
+
+Deferred: authentication/authorization, real socket/load/TLS and multi-worker
+startup/aggregate memory measurements, durable artifact loading instead of cold
+generation, production startup budgets, real SQL integration and FIS-002 clean
+isolated offline packaging/transfer acceptance. Each worker prepares its own
+bounded cache; no cross-process sharing, refresh or on-disk cache is implemented.
+The simulator's fictional assumptions remain uncalibrated; no ML/inference,
+prediction score/forecast endpoint, deployment or cloud work was introduced.
+
+All changes remain **unstaged**, with no commit, push, merge or deployment.
+Reviewed files: README.md; api/config.py; api/main.py; api/providers.py;
+api/history.py; docs/HISTORY_API.md; docs/PROJECT_STATE.md; docs/RELEASE_GATES.md;
+docs/SIMULATOR.md; docs/TASKS.md; scripts/benchmark_history.py;
+tests/test_engineering_harness.ps1; tests/test_history_api.py.
+Proposed commit: `FIS4 Phase 03B-2A: cached historical readiness API`.
+
 ## Phase 03B Task 1 implementation review — 2026-11-20 (Asia/Dubai)
 
 Branch: `feature/phase03b-fleet-simulator`; starting HEAD and local main:

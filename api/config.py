@@ -1,4 +1,5 @@
 """Explicit configuration only: no environment, credential-store or file discovery."""
+from datetime import date
 from typing import Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
@@ -29,15 +30,31 @@ class SqlCredentials(BaseModel):
     password: SecretStr = Field(min_length=1, max_length=1024, repr=False)
 
 
+class HistorySettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+    as_of: str = Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+    seed: int = Field(default=42017, ge=0, le=2**32 - 1, strict=True)
+
+    @model_validator(mode="after")
+    def validate_date(self):
+        day = date.fromisoformat(self.as_of)
+        if not 2000 <= day.year <= 2100:
+            raise ValueError("Unsupported history cutoff")
+        return self
+
+
 class ProviderConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
-    mode: Literal["synthetic", "sql"] = "synthetic"
+    mode: Literal["synthetic", "sql", "synthetic_history"] = "synthetic"
     sql: SqlSettings | None = None
+    history: HistorySettings | None = None
 
     @model_validator(mode="after")
     def validate_mode(self):
         if (self.mode == "sql") != (self.sql is not None):
             raise ValueError("SQL settings must be present exactly when SQL mode is selected")
+        if (self.mode == "synthetic_history") != (self.history is not None):
+            raise ValueError("History settings must be present exactly when history mode is selected")
         return self
 
 

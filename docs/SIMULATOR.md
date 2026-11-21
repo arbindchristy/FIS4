@@ -143,6 +143,11 @@ ML training, rule engine, inference code or prediction endpoints.
 
 ## Efficient future FastAPI integration proposal
 
+Phase 03B-2A now implements the explicit lifecycle cache and historical API in
+[HISTORY_API.md](HISTORY_API.md). The proposal below records the original Task 1
+boundary; simulator generation remains unchanged. Default CSV and SQL behavior
+remain separate from explicitly selected synthetic history.
+
 Generate/version/validate an artifact once in an explicit preparation step.
 Load it once per process using a bounded lifecycle cache keyed by version/seed/
 as-of/schema. The history structurally implements the existing DataProvider

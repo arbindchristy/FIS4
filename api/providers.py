@@ -153,9 +153,13 @@ class SqlProvider:
 
 def create_provider(config: ProviderConfig, credentials: SqlCredentials | None = None,
                     connection_factory: Callable | None = None) -> DataProvider:
-    if config.mode == "synthetic":
+    if config.mode in ("synthetic", "synthetic_history"):
         if credentials is not None or connection_factory is not None:
             raise ProviderConfigurationError()
+        if config.mode == "synthetic_history":
+            from api.history import SyntheticHistoryProvider
+
+            return SyntheticHistoryProvider(config.history)
         return SyntheticCsvProvider()
     if not isinstance(credentials, SqlCredentials) or not isinstance(config.sql, SqlSettings):
         raise ProviderConfigurationError()

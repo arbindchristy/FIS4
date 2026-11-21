@@ -48,9 +48,9 @@ try {
     $verify = Join-Path $root 'scripts\verify.ps1'
     $security = Join-Path $root 'scripts\security_check.ps1'
     $result = Run-Script $verify @('-PythonExecutable', $PythonExecutable)
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 98; Failures: 0; Errors: 0; Skipped: 0' -and $result.Text -match 'External-reference available: 5') 'explicit Python runs 28 readiness, 16 API, 35 mocked-provider and 19 simulator tests'
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 120; Failures: 0; Errors: 0; Skipped: 0' -and $result.Text -match 'External-reference available: 5') 'explicit Python runs original 98 tests plus 22 historical API tests'
     $result = Run-Script $verify
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 98') 'automatic interpreter selection runs all readiness, API, mocked-provider and simulator tests'
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 120') 'automatic interpreter selection runs original suites and historical API tests'
     $result = Run-Script $verify @('-PythonExecutable', (Join-Path $root 'nonexistent-python.exe'))
     Check ($result.Code -eq 2 -and $result.Text -match 'Tests: not completed') 'invalid explicit Python fails without fallback'
 
@@ -93,7 +93,7 @@ try {
     $result = Run-Script $security @('-RepositoryPath', (Join-Path $temporaryRoot 'not-a-repository'))
     Check ($result.Code -eq 2) 'incomplete security inspection fails closed'
     $result = Run-Script $verify @('-PythonExecutable', $PythonExecutable, '-TestMode', 'Portable')
-    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 93; Failures: 0; Errors: 0; Skipped: 0' -and
+    Check ($result.Code -eq 0 -and $result.Text -match 'RESULT: PASS; Tests: 115; Failures: 0; Errors: 0; Skipped: 0' -and
            $result.Text -match 'External-reference excluded: 5') 'portable mode explicitly excludes five external-reference tests'
     Write-Output "HARNESS RESULT: PASS; Checks: $count"
     exit 0

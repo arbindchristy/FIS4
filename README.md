@@ -1,5 +1,20 @@
 # FIS v4 — Phase 03A React readiness dashboard
 
+## Phase 03B Task 1: offline fictional fleet simulator
+
+`simulator/` generates reproducible event/history tables and validated daily
+snapshots for 160 fictional tails across four commands and four calendar years.
+It is separate from the API/dashboard and uses the unchanged readiness engine.
+No new packages, SQL, real records, prediction or ML are required.
+
+```powershell
+.\.venv\Scripts\python.exe -B -m simulator --as-of 2026-11-20
+```
+
+See [the simulator schema and generation guide](docs/SIMULATOR.md) for configuration,
+optional ignored CSV exports, prediction-date boundaries and the proposed cached
+FastAPI integration. Actual verification evidence is in docs/PROJECT_STATE.md.
+
 ## Phase 03A local dashboard
 
 `frontend/` contains the React/TypeScript/Vite dashboard. All readiness metrics,

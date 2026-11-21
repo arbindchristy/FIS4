@@ -31,8 +31,11 @@
 | Phase 03A backend regression | Preserved and verified | 79 full / 74 portable tests, 12 harness checks; backend/engine/formulas unchanged |
 | Phase 03A security and staging | Complete; final staged review passed | 23 reviewed files staged; 44-file proposed/post-staging scans exit 0, 0 violations; all 8 source-expression leads resolved in PROJECT_STATE; generated artifacts excluded |
 | Phase 03A design references | Validation pending | No approved design reference found; new layout, no claimed visual match |
-| Phase 03A publication | Pending explicit approval | Stop at final staged review; no commit/push/merge |
-| Synthetic fleet simulator / Phase 03B | Not started; not authorized | No simulator or further implementation work in this review |
+| Phase 03A publication | Merged, locally verified | main/starting HEAD 25b1eaa5e8e464247d9b49e38c468d0aa03b9dd3 contains PR #3; prior review records are historical |
+| Phase 03B Task 1 fleet simulator | Implemented; unstaged review | 160 fictional tails, four commands, four years; persistent causal episodes, telemetry, existing-engine snapshots; docs/SIMULATOR.md |
+| Phase 03B Task 1 verification | Passed | 98 full / 93 portable tests (original 79/74 preserved); 19 new tests; 12 harness checks; security findings dispositioned in PROJECT_STATE |
+| Phase 03B simulator API integration | Proposal only; not implemented | Prepare once and cache/index snapshots and approved aggregates; preserve existing endpoint contracts and provider bounds |
+| Rule-based / ML prediction | Not started | Future-only feature boundary documented; no targets, training, inference or prediction API |
 | Offline deployment compatibility and packaging | Deferred | Destination-machine evidence and separate authorization required |
 
 Do not convert missing dependencies, target-machine unknowns, or historical

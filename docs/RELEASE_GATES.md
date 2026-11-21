@@ -1,5 +1,25 @@
 # FIS4 release gates
 
+## Phase 03B Task 1 simulator review boundary
+
+| Gate | Evidence / disposition |
+|---|---|
+| Baseline | feature/phase03b-fleet-simulator starts at local main 25b1eaa5e8e464247d9b49e38c468d0aa03b9dd3 (merged PR #3); supplied extra SHA suffix documented in PROJECT_STATE |
+| Population / coverage | Exactly 160 zero-padded fictional tails, four balanced commands, 1,461 complete days for default four-year example; all six statuses |
+| Persistent history integrity | Episode/action timing, supply receipt before repair, non-overlap, legal persistent transitions, accumulated hours, inspection consumption/resets, depot lifecycles validated |
+| Determinism / cutoff | Repeated full output frames/bytes identical; alternate seed valid/different; features_at uses observed end-of-day state without eventual outcomes |
+| Regression | 98 full / 93 portable tests pass, retaining original 79/74; original 28 readiness regressions unchanged; five external-reference tests explicit |
+| Harness | All twelve scenarios retained and pass, with count expectations extended for 19 simulator tests |
+| Security | Tracked scan exits 0: no violations, eight existing resolved leads; six new files explicitly reviewed with unchanged text rules and no additional leads; no staging |
+| Decisions / isolation | FIS-001/FIS-002, original readiness code/tests, API, React, fixture and Python pins unchanged; fictional assumptions only, no external access/new packages |
+| Performance / integration | Full preparation measured, including independent snapshot cross-check; retained/peak memory limitations documented; future prepare-once/cache strategy only |
+| Review / publication | Source and docs left unstaged; no commit/push/PR; further work requires its own authorization |
+
+This accepts fictional generator integrity only. It does not validate physical
+aircraft behavior, prediction usefulness, actual SQL integration, API/dashboard
+integration, model training, cloud deployment or FIS-002 offline transfer. Future
+integration must not regenerate four years of snapshots per dashboard request.
+
 These gates reuse `AGENTS.md`, the formula decision in `DECISIONS.md`, the
 Phase 01 `TEST_REPORT.md`, and the historical `PUBLICATION_REVIEW.md`.
 They do not create a second business-rule or approval authority.

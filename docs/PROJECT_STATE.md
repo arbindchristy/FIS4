@@ -1,5 +1,101 @@
 # FIS4 project state
 
+## Phase 03B Task 1 implementation review — 2026-11-20 (Asia/Dubai)
+
+Branch: `feature/phase03b-fleet-simulator`; starting HEAD and local main:
+`25b1eaa5e8e464247d9b49e38c468d0aa03b9dd3`, merged Phase 03A PR #3.
+The supplied baseline has 45 characters, with an extra `dcfad` suffix after this
+valid 40-character Git SHA. Local main and branch match the valid prefix; no
+fetch or branch rewrite was needed. This section supersedes pending Phase 03A
+publication/authorization statuses below; earlier evidence remains historical.
+FIS-001/FIS-002 and protected readiness/API/frontend files are unchanged.
+
+### Implementation
+
+New `simulator/` package separates validated contracts, persistent episode
+generation and optional local measurement/CSV export. Defaults: 160 zero-padded
+fictional tails, four balanced commands, seed 42017, four calendar years, explicit
+as-of date. Bounded configuration supports other balanced sizes/date ranges.
+
+Normalized aircraft, readiness events, daily operations, maintenance/depot episodes
+and supply/lifecycle actions feed daily snapshots using the original engine.
+Persistent major/minor faults, recurring families, supply wait/receipt/repair,
+inspection consumption/resets and staggered depot entry/exit govern daily flight
+opportunities. Invented command stress/tempo/delays introduce imperfect effects.
+`features_at(day)` uses only end-of-day observed state for strictly later targets;
+it never reads eventual closes, future actions or latent sampled durations.
+The history structurally implements DataProvider (`source`, defensive load_events)
+but is deliberately not selected or imported by the API.
+
+Nineteen portable simulator tests added. All twelve original harness scenarios
+retained with expected counts updated; no existing regression expectation or
+scanner rule changed. The first loop's test-only pandas chained-assignment warning
+was corrected by binding the target frame before mutation. Explicit schemas,
+fictional assumptions, time/CSV/SQL contracts, censoring/leakage boundaries and
+future cached API strategy are documented in `SIMULATOR.md`.
+
+### Actual executed verification
+
+Commands ran within FIS4 using existing CPython 3.13.7 Windows x64, pandas 2.3.3,
+NumPy 2.3.4. No downloads/new packages. Every completed command below exited **0**.
+Sandbox process setup failed; scoped authorized execution was used without Full
+Access or security-setting changes.
+
+| Actual command/check | Actual result |
+|---|---|
+| `.\.venv\Scripts\python.exe -B -m unittest discover -s tests -p test_simulator.py -v` | Initial loop 19/19 passed; later final full/portable suites also pass all 19 |
+| `powershell.exe -NoProfile -File .\scripts\verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **98 passed**, 0 failures/errors/skips, 24.715 s: original 79 plus 19 simulator tests |
+| Same verify command with `-TestMode Portable` | **93 passed**, 0 failures/errors/skips, 23.492 s; same five external-reference tests excluded |
+| `powershell.exe -NoProfile -File .\tests\test_engineering_harness.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe` | **12/12 passed**, preserving full/automatic/portable and original failure/redaction scenarios |
+| `powershell.exe -NoProfile -File .\scripts\security_check.ps1` | 44 tracked files; 0 violations; same 8 resolved manual leads; REVIEW REQUIRED, exit 0 |
+| Inline PowerShell: parse existing scanner AST, extract Inspect-Text, exact six-file untracked allowlist, plaintext/size/link checks and unchanged scanner text rules | 6 new files scanned, 0 additional leads; no index changes |
+| `.\.venv\Scripts\python.exe -B -m simulator --as-of 2024-02-29 --seed 6303 --tails 8 --years 1 --export` | 8 tails/four commands/366 days; 2,928 daily rows; six CSVs plus manifest in ignored workspace folder |
+| Inline Python CSV readback: six manifest SHA-256 checks, text tail dtype, explicit timestamp parsing, original-engine snapshot comparison | PASS; leading-zero `000001` and snapshot parity retained |
+| `.\.venv\Scripts\python.exe -B -m simulator --as-of 2026-11-20` | Default full dataset validated; final normal measured run **7.953 s** |
+| Same generation command with `--profile` | Python allocation profile; details below |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --exit-code 25b1eaa -- AGENTS.md docs/DECISIONS.md readiness.py api frontend requirements.txt tests/test_readiness.py tests/test_api.py tests/test_providers.py tests/legacy_reference.py tests/suite_selection.py data/synthetic_readiness.csv TEST_REPORT.md` | Protected decisions/engine/tests, API/React, fixture and dependencies unchanged |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --check` | PASS; new untracked files separately reviewed |
+
+Tests verify exact population/coverage, identical repeated full tables/bytes,
+different valid seed, canonical statuses, ordering/conflicts, engine reuse and
+fleet/command reconciliation, hours/inspection accounting, persistent causal
+supply/depot/maintenance lifecycles, future-outcome exclusion, private RNG state
+and rejection of corrupted coverage/timing/counters/hours/statuses.
+
+Default as-of 2026-11-20 covers 2022-11-21..2026-11-20: **1,461 days**.
+Aircraft 160; readiness events 10,273; daily operations 233,760; episodes 4,351;
+actions 11,564; daily snapshot 233,760. All six canonical statuses occur.
+Deep retained DataFrame memory: **87,235,837 bytes (83.19 MiB)**, including
+object-column accounting which can double-count shared strings; this is not RSS.
+Tracemalloc excludes untracked native allocations, interpreter/import startup
+and OS overhead; profiling adds substantial time overhead. Maximum-size
+configurations have not been benchmarked.
+
+### Security dispositions and acceptance boundary
+
+Eight tracked scan leads are four lines seen in both index and working tree:
+api/config.py:29 is a SecretStr field declaration with no value;
+api/providers.py:86 binds a runtime server argument with no embedded endpoint;
+api/providers.py:89 binds an injected SecretStr with no embedded credential or
+logging; frontend/e2e/dashboard.spec.ts:14 checks hostname equality against
+loopback values, a heuristic match. All eight are explicitly resolved by source
+review. The six new files have no additional leads. No confirmed violations or
+unresolved manual findings. Scanner rules and actual Git index are unchanged;
+post-staging scanning remains mandatory if later staging is approved. This is
+not a vulnerability-database audit or full-history scan.
+
+Limits: fictional, single-episode, daily-resolution assumptions; one spare demand
+per fault; fixed commands; no overlapping faults/transfers. No physical/statistical
+calibration, target construction, prediction usefulness or ML validation. The
+validator independently rebuilds snapshots during preparation; nothing runs on
+dashboard requests. Future integration should prepare/version once and cache/index
+snapshots and original-engine aggregates while preserving API/provider bounds.
+No SQL, operational data, credentials, legacy edits, API/React changes, external
+access, cloud hosting, prediction endpoints or release packaging were used.
+
+Changes remain **unstaged** for review; no commit, push or PR performed.
+Proposed commit: `FIS4 Phase 03B Task 1: reproducible synthetic fleet history`.
+
 ## Current Phase 03A final staged review — 2026-11-20 (Asia/Dubai)
 
 Branch: `feature/phase03a-react-dashboard`. HEAD remains

@@ -2,6 +2,7 @@
 
 | Item | Status | Evidence or next action |
 |---|---|---|
+| Phase 03C-1A platform intelligence backend | Implemented; local verification passed; awaiting chief-architect review | Stable fictional metadata and additive cached APIs; 21 focused, 160 full, 155 portable tests and 12 harness checks pass; security exit 0, 0 violations, 10 existing leads dispositioned; unstaged/unpublished |
 | PR #7 mobile chart touch scrolling | Fixed; local verification passed | One CSS value; actual touch regression fails before/pass after; 13 history browser passes (2 non-mobile skips), 61 component tests, TypeScript/build and 139 backend tests pass; recovered harness exit 0, 12/12 checks including 134 portable tests; physical devices deferred |
 | Phase 01 readiness baseline | Complete | 28 passing tests; `TEST_REPORT.md` |
 | Customer formula lock | Complete | `DECISIONS.md`, FIS-001 |

@@ -33,7 +33,7 @@ def main():
     if args.profile:
         tracemalloc.stop()
     frames = {name: getattr(history, name) for name in (*SCHEMAS, "snapshot")}
-    report = dict(schema_version=1, source="synthetic", seed=config.seed,
+    report = dict(schema_version=2, source="synthetic", seed=config.seed,
                   start=config.start.isoformat(), as_of=config.as_of.isoformat(),
                   tails=config.tails, commands=4, days=config.days,
                   rows={name: len(frame) for name, frame in frames.items()})

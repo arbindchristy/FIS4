@@ -1,5 +1,88 @@
 # FIS4 project state
 
+## Phase 03C-1A platform-aware historical backend - 2026-11-22
+
+Branch feature/phase03c1-platform-intelligence, clean base
+eda1baf20325675cab330b83e42145b2df1c6ac7. FIS-001/FIS-002/FIS-003, readiness.py,
+original Python regressions, provider configuration/SQL implementation, all frontend
+files and dependency pins remain unchanged. No network, SQL or model access.
+
+Simulator schema 2 appends stable fictional platform metadata to aircraft/events;
+no random draws or operational algorithms change. Default population remains 160,
+four commands of 40, with four realistic platform labels spanning every command.
+No battalion fields are needed or serialized. All original columns across all six
+tables matched a Git-baseline 16-tail/365-day/seed-42017 run. The simulator's sparse
+status-change/boundary reports remain distinct from working-day Production Control
+observations; fictional parity fixtures test approved Streamlit reconstruction.
+
+Three additive history-mode routes: /api/v1/platforms,
+/api/v1/readiness/history/platforms and /api/v1/readiness/history/platforms/series.
+List/comparison rows capped at 32; series at 365 points; all bodies at 256 KiB.
+Strict allowlisted filters and generic errors; no internal hierarchy in responses.
+Existing API models/routes and default CSV/SQL behavior remain unchanged.
+
+One lifecycle cache adds immutable platform/command-platform records computed by
+the approved readiness engine. Warm requests do bounded lookups only. Original
+cache has 7,305 records; platform map adds 29,220 for this cutoff. No runtime or
+production provider contract is constrained to that fictional distribution.
+
+Focused command `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_platforms.py -v`
+passed 21/21 in 46.542 s (exit 0). All 12 harness scenarios are retained; exact
+counts now expect original 139 plus 21 = 160 full and 155 portable (five legacy
+exclusions). Actual executed checks from the repository root:
+
+| Command / check | Actual result |
+|---|---|
+| `.\.venv\Scripts\python.exe -B -m unittest discover -s tests -p test_platforms.py -v` | 21/21 passed, 46.542 s, exit 0 |
+| `& .\scripts\verify.ps1 -PythonExecutable .\.venv\Scripts\python.exe` | 160/160 passed, 152.093 s, exit 0 |
+| Same command with `-TestMode Portable` | 155/155 passed, 151.675 s, exit 0; five legacy-reference tests explicitly excluded |
+| In-memory original-column comparison against Git HEAD simulator/contracts and generator | Six tables match for 16 tails/365 days/seed 42017, exit 0 |
+| Exact protected-file comparison and `git diff --check` | Passed, exit 0 |
+| Explicit new-file plaintext/link/size and existing Inspect-Text scan | tests/test_platforms.py reviewed; zero additional leads, exit 0 |
+| `& .\scripts\security_check.ps1` | 63 tracked/index files, zero confirmed violations; 10 reviewed manual leads, exit 0 / REVIEW REQUIRED |
+
+All test runs have zero failures/errors/skips. Full/portable runs above were
+concurrent; their durations are suite execution measurements, not production or
+cold-start benchmarks. Existing pandas/Starlette advisories remain unsuppressed.
+No frontend/browser tests were run because React and frontend contracts are unchanged.
+
+Every security lead is an existing expression seen in both index and working tree:
+
+| Location (two leads each) | Disposition |
+|---|---|
+| api/config.py SecretStr declaration | No embedded credential |
+| api/providers.py runtime server binding | Configured argument; no embedded endpoint |
+| api/providers.py runtime credential binding | Injected secret; no embedded value or logging |
+| frontend/e2e/dashboard.spec.ts hostname comparison | Loopback assertion; benign heuristic match |
+| PROJECT_STATE.md historical Playwright-option text | Test-server setting; benign heuristic suffix match |
+
+Scanner rules are unchanged. Untracked files are outside the standard scan, so the
+new test was separately reviewed. No secrets, restricted SQL, operational records,
+internal unit assignments or artifacts were introduced.
+
+`& .\tests\test_engineering_harness.ps1 -PythonExecutable .\.venv\Scripts\python.exe`
+completed with exit 0 and `HARNESS RESULT: PASS; Checks: 12`. Explicit and automatic
+selection run all 160 tests; the final portable check passes 155 with five external
+references excluded. Invalid-interpreter, failing/zero-test, security redaction,
+prohibited-path/model and incomplete-inspection checks are preserved. No scanner
+or protected regression expectations were weakened. Final documentation/Python
+syntax, relative-link, whitespace and exact 13-file-scope checks pass; the index
+remains empty. Final security reruns inspect the completed working tree; the new
+untracked test is explicitly reviewed separately. No publication or staging occurs.
+
+Changed inventory: api/history.py, api/main.py; simulator/contracts.py,
+simulator/generator.py, simulator/__main__.py; tests/test_platforms.py,
+tests/test_engineering_harness.ps1; README.md, docs/HISTORY_API.md,
+docs/SIMULATOR.md, docs/PROJECT_STATE.md, docs/TASKS.md, docs/RELEASE_GATES.md.
+Ready for chief-architect review of this local synthetic backend implementation;
+no real integration or deployment acceptance is implied.
+
+Unverified: physical SQL mapping/COALESCE/TLS/permissions, actual current hierarchy,
+model/inference compatibility, production cold-start/load/multi-worker behavior,
+authentication/access controls and FIS-002 offline deployment. The simulator does
+not represent real platform-specific reliability or historical transfers/retirements.
+No staging, commit, push, PR, merge or deployment is authorized by this task.
+
 ## Phase 03C-0 permanent Streamlit contract - 2026-11-22
 
 Chief-architect documentation approval confirmed on 2026-11-22, including explicit

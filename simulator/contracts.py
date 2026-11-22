@@ -1,4 +1,4 @@
-"""Version 1 tabular contracts, validation and existing-provider adapter."""
+"""Version 2 tabular contracts, validation and existing-provider adapter."""
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Literal
@@ -9,9 +9,10 @@ import readiness
 
 
 COMMANDS = ("FICTIONAL_A", "FICTIONAL_B", "FICTIONAL_C", "FICTIONAL_D")
+PLATFORMS = ("UH-60L", "UH-60M", "AH-64E", "AW139")
 SCHEMAS = {
-    "aircraft": ("tail", "command", "initial_hours", "inspection_interval", "initial_hrs_to_insp"),
-    "events": ("date", "tail", "status", "command"),
+    "aircraft": ("tail", "command", "initial_hours", "inspection_interval", "initial_hrs_to_insp", "platform"),
+    "events": ("date", "tail", "status", "command", "platform"),
     "operations": ("date", "tail", "flight_hours", "total_hours", "hrs_to_insp",
                    "fault_count", "recurring_fault_count", "active_episode",
                    "episode_age_days", "supply_wait_days", "outstanding_demand"),
@@ -87,6 +88,7 @@ class SyntheticHistory:
         require(fleet["tail"].tolist() == [f"{i:06d}" for i in range(1, c.tails + 1)], "tail identifiers")
         require(set(fleet.command) == set(COMMANDS), "four fictional commands required")
         require((fleet.groupby("command").size() == c.tails // 4).all(), "command balance")
+        require(fleet.platform.isin(PLATFORMS).all(), "aircraft platform")
         require((fleet.initial_hours >= 0).all() and (fleet.inspection_interval > 0).all(), "fleet hours")
         require((fleet.initial_hrs_to_insp > 0).all()
                 and fleet.initial_hrs_to_insp.le(fleet.inspection_interval).all(), "initial inspection balance")
@@ -99,6 +101,7 @@ class SyntheticHistory:
         require(events.equals(events.sort_values(["date", "tail"]).reset_index(drop=True)), "event ordering")
         require(events.status.isin(readiness.CANONICAL_STATUSES).all(), "unknown status")
         require(events.command.eq(events["tail"].map(fleet.set_index("tail").command)).all(), "event command")
+        require(events.platform.eq(events["tail"].map(fleet.set_index("tail").platform)).all(), "event platform")
         first_last = events.groupby("tail").date.agg(["min", "max"])
         require(len(first_last) == c.tails and first_last["min"].dt.normalize().eq(days[0]).all()
                 and first_last["max"].dt.normalize().eq(days[-1]).all(), "event coverage")

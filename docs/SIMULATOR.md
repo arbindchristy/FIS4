@@ -1,4 +1,4 @@
-# Phase 03B Task 1: fictional fleet history, schema v1
+# Fictional fleet history, schema v2 (Phase 03C-1A platform metadata)
 
 This generator uses invented engineering assumptions and identifiers. It is not
 an aircraft reliability model, operational evidence, or a validated predictor.
@@ -108,8 +108,8 @@ BIT flags, with appropriate indexes/foreign keys and separate synthetic provenan
 
 | Table / key | Fields and meaning |
 |---|---|
-| aircraft / tail | tail TEXT; command TEXT; initial_hours FLOAT hours; inspection_interval FLOAT hours; initial_hrs_to_insp FLOAT hours. Exactly one command throughout v1. |
-| events / (date, tail) | date TIMESTAMP; tail TEXT FK aircraft; status TEXT enum FMC/PMCM/PMCS/NMCS/NMCM/DEPOT; command TEXT. Exact existing provider readiness-event columns. |
+| aircraft / tail | tail TEXT; command TEXT; initial_hours FLOAT hours; inspection_interval FLOAT hours; initial_hrs_to_insp FLOAT hours; platform TEXT. Exactly one command and one platform throughout the generated world. |
+| events / (date, tail) | date TIMESTAMP; tail TEXT FK aircraft; status TEXT enum FMC/PMCM/PMCS/NMCS/NMCM/DEPOT; command TEXT; platform TEXT. Provider readiness events with additive platform metadata. |
 | operations / (date, tail) | date daily TIMESTAMP; tail TEXT FK aircraft; flight_hours, total_hours, hrs_to_insp FLOAT hours; fault_count, recurring_fault_count INT; active_episode TEXT FK episodes or empty; episode_age_days INT; supply_wait_days INT; outstanding_demand INT 0/1. Age is elapsed whole days, 0 on opening day; supply wait resets to 0 after receipt. |
 | episodes / episode_id | episode_id TEXT `SYN-TAIL-SEQUENCE`; tail TEXT FK aircraft; kind TEXT enum FAULT/INSPECTION/DEPOT; fault_code TEXT fictional family or empty; recurring BOOL; opened_at TIMESTAMP; closed_at nullable TIMESTAMP actual observed close only. |
 | actions / (episode_id, action) | date TIMESTAMP; episode_id TEXT FK episodes; action TEXT enum OPEN/PART_REQUEST/PART_RECEIPT/CLOSE. At most one of each per episode; OPEN required, other actions only when observed. |
@@ -168,3 +168,25 @@ categoricals/columnar persistence in a separately authorized phase.
 
 Actual commands, tests, performance/memory evidence, security dispositions and
 remaining acceptance boundaries are recorded in PROJECT_STATE.md.
+
+
+## Phase 03C-1A metadata compatibility
+
+Schema 2 appends platform to aircraft and events; reconstructed snapshots inherit
+it. CSV manifests now report schema_version 2. Re-import identifiers as text and
+honor the manifest/schema; no automatic migration of prior exports is implemented.
+Operational tables, random draws, event timing and readiness formulas are unchanged.
+Platforms cycle deterministically by blocks of four aircraft: UH-60L, UH-60M,
+AH-64E, AW139. This is fictional allocation, not a real organization or fitted
+platform reliability model. At default size, every platform spans all commands
+(40 tails/platform, 10/command-platform pair); smaller supported populations can
+contain fewer labels. Metadata validation rejects unknown platforms or changing
+platform identity within a tail's event history. No battalion identifiers are added.
+
+A source-baseline comparison on 16 tails/one year/seed 42017 confirmed all six
+original tables match the pre-change Git version when projected onto original
+columns. Automated determinism and event/snapshot identity tests supplement that
+comparison. See HISTORY_API.md for the additive cached platform endpoints; React,
+CSV/SQL providers and prediction workflows are unchanged. Working-day/intra-day
+report parity is tested with fictional input fixtures rather than rewriting the
+status-change simulator into a Production Control recording system.

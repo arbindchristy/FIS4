@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 import readiness
 from api.config import ProviderConfig, SqlCredentials, parse_config
 from api.providers import DataProvider, ProviderError, Source, create_provider
-from api.history import HistoryUnavailable, SyntheticHistoryProvider
+from api.history import MAX_PLATFORMS, HistoryUnavailable, SyntheticHistoryProvider
 
 
 class Selection(BaseModel):
@@ -33,6 +33,19 @@ class SeriesSelection(BaseModel):
     end_date: Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")]
     days: Literal["30", "90", "180", "365"]
     command: Annotated[str | None, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9_-]+$")] = None
+
+
+class PlatformListSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    command: Annotated[str | None, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9_-]+$")] = None
+
+
+class PlatformSelection(HistoricalSelection):
+    platform: Annotated[str | None, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9][A-Z0-9-]*$")] = None
+
+
+class PlatformSeriesSelection(SeriesSelection):
+    platform: Annotated[str, Field(min_length=1, max_length=32, pattern=r"^[A-Z0-9][A-Z0-9-]*$")]
 
 
 class Metrics(BaseModel):
@@ -82,6 +95,26 @@ class HistorySeriesResponse(BaseModel):
     end_date: date
     point_count: int = Field(ge=1, le=365)
     observations: list[HistoryObservation] = Field(min_length=1, max_length=365)
+
+
+class PlatformListResponse(BaseModel):
+    source: Literal["synthetic"] = "synthetic"
+    command: str | None = None
+    platforms: list[str] = Field(max_length=MAX_PLATFORMS)
+
+
+class PlatformReadiness(Metrics):
+    platform: str
+    status_counts: CanonicalStatusCounts
+
+
+class PlatformComparisonResponse(Metadata):
+    platform: str | None = None
+    platforms: list[PlatformReadiness] = Field(min_length=1, max_length=MAX_PLATFORMS)
+
+
+class PlatformSeriesResponse(HistorySeriesResponse):
+    platform: str
 
 
 MAX_SERIES_BYTES = 256 * 1024
@@ -265,6 +298,67 @@ def create_app(config: Mapping | ProviderConfig | None = None, *,
                                               for code in codes])
 
     if isinstance(provider, SyntheticHistoryProvider):
+        def validate_platform_query(request, selected, command, platform=None):
+            # Registration AND dependency override guards keep CSV/SQL isolated.
+            if not isinstance(selected, SyntheticHistoryProvider):
+                raise HTTPException(404, "Historical readiness is not enabled")
+            if any(len(request.query_params.getlist(key)) != 1 for key in request.query_params):
+                raise HTTPException(422, "Invalid request parameters")
+            if command is not None and command not in selected.commands:
+                raise HTTPException(422, "Invalid historical command")
+            if platform is not None and platform not in selected.platforms:
+                raise HTTPException(422, "Invalid historical platform")
+
+        def platform_date(value):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                raise HTTPException(422, "Invalid historical date") from None
+
+        def bounded_platform_response(body):
+            response = JSONResponse(content=body.model_dump(mode="json"))
+            if len(response.body) > MAX_SERIES_BYTES:
+                raise HTTPException(500, "Internal server error")
+            return response
+
+        @app.get("/api/v1/platforms", response_model=PlatformListResponse,
+                 description="Allowlisted platforms for the selected synthetic-history command; at most 32 labels.")
+        def platform_list(request: Request, query: Annotated[PlatformListSelection, Query()], provider: Provider):
+            validate_platform_query(request, provider, query.command)
+            return bounded_platform_response(PlatformListResponse(
+                command=query.command, platforms=list(provider.platforms_for(query.command))))
+
+        @app.get("/api/v1/readiness/history/platforms", response_model=PlatformComparisonResponse,
+                 description="Cached platform comparisons at an explicit date; optional command/platform filters; at most 32 rows.")
+        def platform_comparison(request: Request, query: Annotated[PlatformSelection, Query()], provider: Provider):
+            validate_platform_query(request, provider, query.command, query.platform)
+            day = platform_date(query.date)
+            try:
+                rows = provider.read_platforms(day, query.command, query.platform)
+            except KeyError:
+                raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
+            return bounded_platform_response(PlatformComparisonResponse(
+                date=day, command=query.command, platform=query.platform,
+                platforms=[PlatformReadiness(platform=label, **record.metrics(),
+                    status_counts=CanonicalStatusCounts(**dict(zip(readiness.CANONICAL_STATUSES, record.statuses))))
+                    for label, record in rows]))
+
+        @app.get("/api/v1/readiness/history/platforms/series", response_model=PlatformSeriesResponse,
+                 description="One platform's cached chronological daily readiness; optional command; 30/90/180/365 days, at most 256 KiB.")
+        def platform_series(request: Request, query: Annotated[PlatformSeriesSelection, Query()], provider: Provider):
+            validate_platform_query(request, provider, query.command, query.platform)
+            end = platform_date(query.end_date)
+            try:
+                series = provider.read_series(end, int(query.days), query.command, platform=query.platform)
+            except KeyError:
+                raise HTTPException(404, "No synthetic snapshot for the requested selection") from None
+            return bounded_platform_response(PlatformSeriesResponse(
+                command=query.command, platform=query.platform, requested_days=int(query.days),
+                start_date=series.start, end_date=series.end, point_count=len(series.points),
+                observations=[HistoryObservation(date=day, **record.metrics(),
+                    status_counts=CanonicalStatusCounts(**dict(zip(readiness.CANONICAL_STATUSES, record.statuses))))
+                    for day, record in series.points]))
+
         @app.get("/api/v1/readiness/history", response_model=FleetResponse,
                  description="Explicit end-of-day synthetic readiness; history mode only. No authentication is implemented.")
         def historical_readiness(request: Request, query: Annotated[HistoricalSelection, Query()],

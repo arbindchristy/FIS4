@@ -298,3 +298,98 @@ The history-only route may be unavailable behind a differently configured proxy;
 there is no new capability/authentication API. Deployment compatibility and access
 control remain separate acceptance requirements. README documents the two explicit
 loopback development configurations; no arbitrary runtime API host is supported.
+
+
+## Phase 03C-1A: platform-aware historical intelligence
+
+Three additive GET routes are registered only in explicitly selected
+`synthetic_history` mode. Existing fleet, command, distribution, history and series
+routes retain their query/response contracts; they do not accept a platform query.
+Default small CSV and SQL modes do not register platform routes or initialize
+history. Dependency overrides to non-history providers are also rejected before
+any event loading/SQL call. Source stays `synthetic`, including its response header.
+No authentication or authorization is implemented by these routes.
+
+| Route | Parameters | Response |
+|---|---|---|
+| `/api/v1/platforms` | Optional command | PlatformListResponse: source, command (or null), sorted unique platforms (at most 32 strings) |
+| `/api/v1/readiness/history/platforms` | Required date; optional command and platform | PlatformComparisonResponse: source, date, command, platform (or null), platforms (1..32 PlatformReadiness rows) |
+| `/api/v1/readiness/history/platforms/series` | Required end_date, days and platform; optional command | PlatformSeriesResponse: existing series fields plus selected platform |
+
+Dates must be exact valid YYYY-MM-DD calendar dates. Command and platform values
+must be in the provider's cached allowlists. Platform syntax is uppercase letters,
+digits and hyphens, starting with a letter/digit, 1..32 characters; values are not
+silently trimmed or uppercased. Series days are exactly 30, 90, 180 or 365. Unknown
+keys, duplicate keys (including encoded aliases), missing required values and
+invalid/unknown filters return safe 422 errors without echoing arbitrary values.
+A valid date outside history or known platform without the selected command
+association returns 404. Missing/closed/incomplete cache returns safe 503, never
+partial series or fixture substitution. Unexpected/internal payload failures use
+the existing generic 500 convention. Unsupported methods return 405.
+
+PlatformReadiness contains platform, all existing Metrics fields and status_counts
+with FMC/PMCM/PMCS/NMCS/NMCM/DEPOT separately. Comparison with no platform filter
+returns every platform present in the selected command (or fleet). Selecting both
+command and platform returns one aggregate for their intersection. Count partitions
+reconcile; percentages are computed by FIS-001, not averaged across partitions.
+Series observations retain the existing daily metrics, date and six status counts.
+The final point matches that platform comparison at the same end date/command.
+
+Each series contains at most 365 chronological daily observations; inclusive end,
+start clipping and explicit effective dates/point_count are unchanged. All three
+new responses are validated before serialization and enforce the existing
+262,144-byte uncompressed JSON-body cap. No tails, battalion fields, hierarchy
+paths, internal unit metadata or operational data are serialized.
+
+Examples against an explicitly configured loopback history application:
+
+```text
+GET /api/v1/platforms?command=FICTIONAL_A
+GET /api/v1/readiness/history/platforms?date=2026-11-20
+GET /api/v1/readiness/history/platforms?date=2024-11-20&command=FICTIONAL_B&platform=UH-60M
+GET /api/v1/readiness/history/platforms/series?end_date=2026-11-20&days=365&platform=AH-64E&command=FICTIONAL_C
+```
+
+### Cache and domain boundaries
+
+Aircraft and readiness events carry stable platform metadata (simulator schema 2).
+Labels are realistic; tails, commands and all associations are fictional. Default
+160 tails/four commands are unchanged. Current assignment and platform identity
+remain constant across this generated world. No battalion table is needed for this
+addition; full organizational mapping remains future authorized integration work.
+
+Preparation runs the original readiness engine for fleet/command aggregates and
+platform/command-platform subsets during the same single lifecycle initialization.
+The original cache map retains five records per day; a separate read-only map adds
+20 platform records per day for this world (29,220 extra records at 1,461 days).
+Metadata tuples, mapping proxies and frozen DailyReadiness objects are not exposed
+as mutable responses. Shutdown/failure/instance isolation is unchanged. Warm
+comparison/list requests use bounded cached lookups; series uses at most 365
+lookups. No simulator generation, snapshots, pandas aggregation or event loading
+occurs on warm platform requests, including concurrent requests.
+
+The four labels, their balanced distribution and fixed population apply only to
+this synthetic generator/configuration. DataProvider and the SQL projection are
+unchanged and acquire no production fleet-size/platform-distribution assumptions.
+A future verified SQL source needs approved platform mapping; this task does not
+wire SQL history or change the approved view or its COALESCE behavior.
+
+The generator still emits status changes plus boundary markers, not every working-day
+Production Control report. It retains calendar-day operational simulation and no
+transfers/retirements. This is not a newly interpreted SQL feed. Fictional parity
+fixtures prove multiple daily observations, last non-null per-column collapse,
+weekend/missing-day carry-forward, current attribution, first-observation population,
+leading zeros, invalid-date removal and no extension beyond the global observed end
+using the unchanged readiness engine. Enhanced1 reconstruction remains separate;
+no prediction code, training, models or future outcomes enter these endpoints.
+
+### Verification scope
+
+`tests/test_platforms.py` adds 21 portable tests: deterministic identity and domain
+validation; Streamlit-style fictional observation parity; FIS-001 known answers;
+three-date reconciliation; command/platform intersections; every-day 365-day
+partitions; all window boundaries; strict filters; payload/OpenAPI/get-only checks;
+CSV/SQL isolation; safe missing-cache errors; immutable concurrent warm reads.
+All original 139 full/134 portable tests remain unchanged. Harness exact totals
+are updated to include the new 21 while retaining all 12 scenarios and failure
+assertions. Actual results and security dispositions are in PROJECT_STATE.md.

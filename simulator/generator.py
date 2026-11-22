@@ -6,7 +6,7 @@ import random
 import pandas as pd
 
 import readiness
-from simulator.contracts import COMMANDS, SCHEMAS, SimulationConfig, SyntheticHistory
+from simulator.contracts import COMMANDS, PLATFORMS, SCHEMAS, SimulationConfig, SyntheticHistory
 
 
 @dataclass(frozen=True)
@@ -38,12 +38,14 @@ def generate(config: SimulationConfig) -> SyntheticHistory:
         rng = random.Random((config.seed << 16) + index)
         tail = f"{index + 1:06d}"
         command = COMMANDS[index % 4]
+        # Metadata only: no extra RNG draws or changes to operational trajectories.
+        platform = PLATFORMS[(index // len(COMMANDS)) % len(PLATFORMS)]
         condition = CONDITIONS[index % 4]
         initial = rng.randint(5000, 25000)  # Integer tenths of a flight hour.
         hours = initial
         interval = 2400
         remaining = rng.randint(500, interval)
-        rows["aircraft"].append((tail, command, initial / 10, interval / 10, remaining / 10))
+        rows["aircraft"].append((tail, command, initial / 10, interval / 10, remaining / 10, platform))
         active = None
         faults = recurrent = serial = 0
         last_fault = ""
@@ -133,7 +135,7 @@ def generate(config: SimulationConfig) -> SyntheticHistory:
                                        active["id"] if active else "", age,
                                        age if waiting else 0, int(waiting)))
             if status != previous_status or offset == config.days - 1:
-                rows["events"].append((eod, tail, status, command))
+                rows["events"].append((eod, tail, status, command, platform))
             previous_status = status
 
     frames = {name: pd.DataFrame(records, columns=SCHEMAS[name]) for name, records in rows.items()}

@@ -1,5 +1,23 @@
 # FIS4 release gates
 
+## Phase 03C-1A platform backend review gate
+
+- Synthetic-only platform metadata; stable tail/platform/current-command identity;
+  original population/status trajectories and FIS-001 metrics preserved.
+- Additive history-only list/comparison/trend routes with combined filters; existing
+  unfiltered routes, CSV/SQL isolation and React unchanged.
+- All six statuses, every-day command/platform reconciliation, bounded windows,
+  strict safe errors, immutable concurrent warm-cache reads and no hierarchy leakage.
+- Fictional intra-day/missing-day parity fixtures use the unchanged Streamlit-style
+  readiness engine; Enhanced1 reconstruction is not substituted.
+- 21 focused, 160 full and 155 portable tests pass; five external-reference
+  exclusions explicit. All 12 harness checks pass; unchanged scanner exits 0,
+  zero confirmed violations and 10 existing leads dispositioned. The new untracked
+  test is explicitly scanned/reviewed with no extra leads. Actual commands/evidence
+  are in PROJECT_STATE.md; chief-architect review remains required.
+- No live SQL, prediction, physical integration, authentication or offline release
+  acceptance is claimed. No new dependencies or publication actions.
+
 ## PR #7 mobile chart touch-scroll fix
 
 - The new real browser touch-input regression reproduces zero movement before

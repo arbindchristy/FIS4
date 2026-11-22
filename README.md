@@ -1,5 +1,13 @@
 # FIS4 helicopter readiness dashboard
 
+## Phase 03C-1A: platform-aware historical backend
+
+Explicit synthetic-history mode now provides a bounded platform list, dated
+platform comparisons and command/platform daily trends. Existing routes and React
+are unchanged. See [platform API contracts](docs/HISTORY_API.md#phase-03c-1a-platform-aware-historical-intelligence)
+and [simulator schema 2](docs/SIMULATOR.md). All aircraft/command associations are
+fictional; no SQL connection or prediction functionality is introduced.
+
 ## Phase 03B-2B Task 2: React historical helicopter dashboard
 
 The existing dashboard now includes 30/90/180/365-day API trends, synchronized

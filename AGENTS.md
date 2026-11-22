@@ -56,6 +56,20 @@ database/credential/model access, packaging, deployment, commit and push still
 require authorization for the active task; a recorded requirement is not itself
 permission to execute those activities.
 
+## Streamlit architecture contract
+
+Before changing history, readiness, platform, SQL integration or prediction code,
+read [docs/STREAMLIT_PARITY.md](docs/STREAMLIT_PARITY.md) and
+[docs/INTRANET_INTEGRATION_CONTRACT.md](docs/INTRANET_INTEGRATION_CONTRACT.md),
+alongside FIS-001/FIS-002 and FIS-003 in docs/DECISIONS.md. Preserve the approved
+history-view semantics, current-assignment hierarchy, internal-only battalion
+mapping and independent platform dimension. Do not silently repair or reinterpret
+legacy logic, substitute a source/trainer, invent transfers, change formulas or
+assume model compatibility. Record unresolved evidence and obtain explicit approval
+for semantic changes. Local sanitized syntax damage does not invalidate the
+working intranet reference. These documents authorize no SQL/model execution,
+training, dependency installation, application changes or deployment by themselves.
+
 ## Project boundaries
 
 - Legacy reference `C:\AI\Projects\fleet_cpi_suite` is read-only.

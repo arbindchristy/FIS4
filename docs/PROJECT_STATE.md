@@ -1,5 +1,68 @@
 # FIS4 project state
 
+## Phase 03C-0 permanent Streamlit contract - 2026-11-22
+
+Chief-architect documentation approval confirmed on 2026-11-22, including explicit
+preservation of the view's inspection/phase-hours COALESCE behavior and separate
+Streamlit readiness versus Enhanced1 prediction reconstruction requirements.
+Prediction compatibility, physical SQL verification and deployment acceptance
+remain unverified. Commit/push/PR publication is explicitly authorized by the user;
+no merge or deployment is authorized. Prior local verification evidence below is
+retained; no successful regression suites are repeated for publication.
+
+Branch feature/phase03c0-streamlit-contract; clean starting commit
+332c1db0f43b167693bc059d1e3897b01d1a27f4. Documentation only: two sanitized
+contracts plus AGENTS.md, DECISIONS.md and this file. FIS-001/FIS-002, backend,
+frontend, simulator, dependencies and regression expectations remain unchanged.
+
+STREAMLIT_PARITY.md records customer-established view/organization requirements,
+verified local source semantics and unresolved Enhanced1 inference compatibility.
+INTRANET_INTEGRATION_CONTRACT.md records logical fields, provider safety and
+exposure boundaries, future acceptance sequence and unchanged FIS-002 requirements.
+FIS-003 records the baseline; AGENTS requires reading both contracts before relevant
+code changes. No credentials, internal mappings, restricted DDL or data copied.
+
+The working intranet v3.10.4 remains the customer-designated functional reference.
+Its sanitized local copy has icon-related syntax damage and feature-code issues;
+neither was repaired or treated as invalidating the deployed application. The
+located Enhanced1 filename includes model, while the requested spelling uses mode.
+Its target/features differ from the inspected Streamlit inference path. Artifact
+lineage, runtime/class/horizon/eligibility alignment, physical SQL mappings and
+sanitized working-intranet feature evidence remain unverified. No model loaded,
+trained, executed or replaced; no SQL/network calls or dependency changes.
+
+Documentation checks: exact five-file scope, relative links, UTF-8/plaintext,
+trailing whitespace, empty index, unchanged application files and byte-preserved
+FIS-001/FIS-002 decision text passed (exit 0). `git diff --check` passed (exit 0).
+Both new untracked contracts were explicitly reviewed with the existing scanner's
+Inspect-Text function plus plaintext/link/size checks: 2/2 files, zero leads,
+exit 0. No scanner rules changed and neither file was staged.
+
+`scripts/security_check.ps1` exited 0: 61 tracked/index files, zero confirmed
+violations, 10 manual leads (five existing expressions in index and working tree).
+All manual findings are dispositioned:
+
+| Existing location (two leads each) | Disposition |
+|---|---|
+| api/config.py SecretStr declaration | No embedded credential |
+| api/providers.py runtime server binding | Injected configuration; no embedded endpoint |
+| api/providers.py runtime credential binding | Injected secret argument; no embedded value or logging |
+| frontend/e2e/dashboard.spec.ts hostname comparison | Existing loopback assertion; heuristic match |
+| PROJECT_STATE.md historical Playwright-option text | Existing benign server-reuse setting; heuristic match |
+
+The scanner's REVIEW REQUIRED status denotes reviewed heuristic findings, not
+confirmed violations. New documents contain no restricted SQL definitions,
+addresses, real organizational mappings, operational records or model artifacts.
+`scripts/verify.ps1 -PythonExecutable .venv/Scripts/python.exe` exited 0:
+139 tests passed in 55.317 s; zero failures, errors or skips, including the
+protected readiness regressions. Existing pandas/Starlette advisories remain
+unsuppressed; no dependency changes were made. This verifies existing behavior,
+not live SQL, Streamlit UI execution or model compatibility. The separate portable,
+frontend and harness-scenario suites were not rerun for this documentation-only task.
+Final staged Git/security checks and publication results are reported in the PR.
+No application changes, SQL access, model execution, merge or deployment.
+
+
 ## PR #7 mobile chart touch-scroll correction - 2026-11-21
 
 Focused fix branch `fix/history-mobile-touch-scroll` starts at merged PR #7,

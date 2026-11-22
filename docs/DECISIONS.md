@@ -118,3 +118,39 @@ activities retain their existing separate authorization and acceptance boundarie
 This documentation-only instruction does not authorize package installation,
 application changes, database/credential/model access, deployment, commit or push.
 FIS-002 does not supersede or weaken FIS-001.
+
+
+## FIS-003: Permanent Streamlit architecture contract - CUSTOMER-DIRECTED BASELINE
+
+Date: 2026-11-22 (Asia/Dubai). Documentation approved by the chief architect.
+Prediction compatibility, physical SQL verification and deployment acceptance
+remain unverified.
+Authority: the user's Phase 03C-0 permanent contract instruction. The customer
+identifies working Streamlit v3.10.4, Enhanced1 and the unchanged history view
+as the integration baseline. Preserve the existing view's inspection/phase-hours
+COALESCE behavior without alternative null handling. Readiness reconstruction
+follows Streamlit; Enhanced1 prediction reconstruction is a distinct compatibility
+requirement and must not be silently unified with it. Local sanitized syntax damage does not invalidate
+the working intranet implementation. No deployed system was accessed.
+
+Read STREAMLIT_PARITY.md and INTRANET_INTEGRATION_CONTRACT.md before changing
+history, readiness, platform, SQL integration or prediction code. Preserve the
+existing view's active-tail filtering, current-assignment attribution, daily
+reconstruction and historical occurrence meaning. Hierarchy is Parent Force ->
+Command Unit -> Battalion -> Tail; historical assignments are unavailable.
+Battalion stays internal and absent from ordinary UI/API responses. Platform is
+an independent aircraft attribute. Public data/associations must be fictional;
+intranet access must be approved and read-only.
+
+The inspected trainer is named train_nmcs_model_enhanced1.py; the instruction's
+train_nmcs_mode_enhanced1.py spelling was not found in the inspected inventory.
+Record this discrepancy rather than selecting a different trainer silently.
+Unresolved checks: working-versus-local feature logic; Streamlit per-column/global
+snapshot versus Enhanced1 whole-row/per-tail snapshot; ordered feature definitions
+and zero filling; current-NMC/DEPOT eligibility; target/horizon/class metadata;
+artifact provenance/runtime compatibility; sanitized SQL field/time/join evidence.
+No model performance, artifact compatibility or real SQL acceptance is claimed.
+
+FIS-001 and FIS-002 remain unchanged and authoritative. This decision adds
+architecture/change-control requirements, not alternative business calculations,
+application implementation, model training, SQL access or publication authorization.

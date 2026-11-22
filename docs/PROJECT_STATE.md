@@ -1,5 +1,56 @@
 # FIS4 project state
 
+## PR #7 mobile chart touch-scroll correction - 2026-11-21
+
+Focused fix branch `fix/history-mobile-touch-scroll` starts at merged PR #7,
+`a269af932c062afe889ee8d0ff29a5e2458d5fb5`. The SVG's `touch-action: pan-y`
+blocked horizontal touch panning inside `.chart-scroll`; changing only that value
+to `auto` lets the browser scroll the existing overflow container. Chart handlers,
+API contracts, backend, simulator, FIS-001/FIS-002 and dependency pins are unchanged.
+
+A new Playwright regression enables touch input and sends Chromium DevTools
+`Input.dispatchTouchEvent` start/move/end gestures over the SVG. It never assigns
+scrollLeft or dispatches synthetic DOM events. The test failed on the old CSS
+(exit 1, scrollLeft stayed 0), then passed with the fix: movement exceeds 60 px
+in both themes; Home/ArrowRight/End inspection still works after the swipe.
+
+Commands use existing installed dependencies, with frontend npm prefix
+`npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache`.
+`run check` passed; `test` passed 61/61; `run build` passed (19 modules).
+`run test:e2e -- --project=history-desktop --project=history-tablet --project=history-mobile`
+passed 13 tests in 49.2 s, with two intentional skips of the new mobile-only case
+on desktop/tablet. All 12 existing history cases passed, covering hover/keyboard,
+filters, errors and both themes. Six screenshots were regenerated as ignored
+local artifacts. Installed Edge touch emulation is not physical-device/iOS evidence.
+
+Root command `scripts/verify.ps1 -PythonExecutable .venv/Scripts/python.exe`
+passed 139/139 in 65.454 s, zero failures/errors/skips, exit 0.
+Recovered final harness evidence, confirmed for publication on 2026-11-22:
+`tests/test_engineering_harness.ps1 -PythonExecutable .venv/Scripts/python.exe`
+exited 0 with `HARNESS RESULT: PASS; Checks: 12`, including 134 passing portable
+tests and five explicitly excluded external-reference tests. No successful test
+suite was repeated during recovery or publication. Unaffected CSV browser projects
+were not rerun for this fix.
+`scripts/security_check.ps1` exited 0: 61 files, zero confirmed violations,
+10 manual leads (five existing expressions duplicated across index/working tree).
+All are benign: SecretStr declaration, runtime server and credential bindings,
+loopback test comparison and the existing Playwright-option documentation match.
+Scanner rules are unchanged. Git whitespace/protected-file checks pass; generated
+screenshots, build output, caches and reports remain excluded from publication.
+Every security lead is dispositioned below; each expression is reported twice,
+once for the index and once for the working tree (10 leads total):
+
+| Existing location | Disposition |
+|---|---|
+| `api/config.py` SecretStr field | Declaration only; no embedded credential |
+| `api/providers.py` server binding | Runtime configuration argument; no embedded endpoint |
+| `api/providers.py` credential binding | Injected secret argument; no embedded value or logging |
+| `frontend/e2e/dashboard.spec.ts` hostname comparison | Loopback assertion; heuristic match |
+| `docs/PROJECT_STATE.md` historical Playwright-option text | Benign test-server setting; heuristic suffix match |
+
+Publication checks scan the staged index using the unchanged security script;
+manual leads remain reviewed findings rather than confirmed violations.
+
 ## Phase 03B-2B Task 2 React historical dashboard review — 2026-11-21 (Asia/Dubai)
 
 Branch `feature/phase03b2b-react-history`; clean starting HEAD

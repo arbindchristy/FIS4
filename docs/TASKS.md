@@ -2,6 +2,7 @@
 
 | Item | Status | Evidence or next action |
 |---|---|---|
+| PR #7 mobile chart touch scrolling | Fixed; local verification passed | One CSS value; actual touch regression fails before/pass after; 13 history browser passes (2 non-mobile skips), 61 component tests, TypeScript/build and 139 backend tests pass; recovered harness exit 0, 12/12 checks including 134 portable tests; physical devices deferred |
 | Phase 01 readiness baseline | Complete | 28 passing tests; `TEST_REPORT.md` |
 | Customer formula lock | Complete | `DECISIONS.md`, FIS-001 |
 | Phase 01 GitHub publication | Complete | Baseline `a57936a8fff7e0502bceef008ea609fe4aef7379` |

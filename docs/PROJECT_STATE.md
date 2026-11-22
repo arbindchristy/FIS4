@@ -1,5 +1,189 @@
 # FIS4 project state
 
+## Phase 03C-1B.2 frontend verification - 2026-11-22
+
+Branch `feature/phase03c1b-react-platform`, unchanged HEAD
+`693c7b56aa894de98ebd6730e811864d5f45edca`. All changes remain unstaged.
+The nine implementation files are preserved. This step changes tests/fixtures,
+browser discovery and three project records. No runtime correction was necessary.
+
+All npm commands below ran from `frontend/`, using installed dependencies only.
+Exact prefix: `npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache`.
+
+| Suffix after prefix | Actual final result |
+|---|---|
+| `run check` | PASS, exit 0; tsc --noEmit |
+| `test` | PASS, exit 0; 122/122 tests in four files, 29.03 seconds |
+| `run build` | PASS, exit 0; Vite 8.3.8, 20 modules, 447 ms |
+| `run test:e2e` | PASS, exit 0; 41 passed/four skipped, 45 total, 2.1 minutes, retries 0 |
+| `run test:e2e -- --project=history-desktop --project=history-tablet --project=history-mobile --grep 'actual platform comparisons\|command/date/platform'` (the shell argument uses a plain pipe, without the Markdown escape) | PASS, exit 0; strengthened follow-up six/six, 1.2 minutes, zero skips/retries |
+
+The original 61 unit tests remain; 61 platform cases were added. Coverage includes
+all three platform APIs; fleet/command populations; six statuses and PMC/count
+reconciliation; all windows/clipping; date/command/platform alignment; malformed,
+incomplete, internal-field and oversized responses; 404/422/503/network errors;
+source/header disagreement, unsupported CSV endpoints, SQL blocking, cancellation
+and stale completion. Deliberately distinct API percentage fixtures prove returned
+values are displayed rather than recalculated. Selection preserves both overview
+percentages and command-card content. Count validation and chart geometry are not
+client-side readiness formulas. No fallback synthetic observations were added.
+
+Browser tests use installed Edge and Playwright-owned loopback CSV/history API and
+Vite servers. New cases check actual synthetic API contracts, all four windows,
+combined selections, delayed/cancelled responses, retry/source blocking, keyboard
+inspection and both-theme contrast (at least 4.5 for checked platform controls/text).
+Viewports: 1440x1000 desktop, 768x1024 tablet, 390x844 mobile. Four intentional skips:
+the original and new mobile-only touch cases each skip desktop and tablet. Both
+mobile touch tests pass. The new case sends CDP touch start/move/end gestures to
+the platform plot and comparison table in both themes, requiring horizontal motion
+over 60 pixels without assigning scroll offsets. No page-wide overflow was observed.
+
+Six final platform screenshots were regenerated and visually inspected:
+`frontend/test-results/platform-actual-platform-c-14fb5-themes-keyboard-stay-usable-history-{desktop,tablet,mobile}/platform-{light,dark}.png`.
+These reflect final runtime source and remain local ignored evidence. Build outputs
+are also ignored: HTML 0.62 kB, CSS 16.41 kB (gzip 4.42 kB), JS 252.65 kB (gzip
+77.31 kB). No runtime source changed after the passing build.
+Local logs: `.harness-test-tmp/phase03c1b2/` (ignored).
+
+### Failure history and targeted corrections
+
+- Initial unit suite: 57 pass/four fail. Old fixtures lacked platform endpoint
+  handling and old heading/alert assumptions needed the new identity/section.
+  Explicit unsupported fixtures and scoped assertions preserve original coverage.
+- New test compilation found unused import/unsupported query options and incorrect
+  nested HTMLElement queries; corrected tests only. One check from repository root
+  failed with missing package.json; corrected working directory immediately.
+- Expanded unit suite: 117 pass/five fail (ready waits/ambiguous caption), then
+  120 pass/two fail (ambiguous headers/new heavy four-window test timeout). Scoped
+  selectors and async waits fix these; only the new four-window test has a 15-second
+  timeout, with all assertions retained. Final complete run: 122 pass.
+- First full browser run: 29 pass/12 fail/four skip. Old global table/window
+  selectors became ambiguous with the new section. Exact/scoped selectors fix
+  those tests without removing assertions. Full rerun: 41 pass/four skip.
+- Stronger availability/command-card preservation assertions were then added.
+  First six-case follow-up: three pass/three fail, caused by comparing innerText
+  with DOM text. The assertion now compares textContent consistently; corrected
+  follow-up six/six pass. No application defect was demonstrated by these failures.
+- Final Git whitespace review identified a mixed-ending new TASKS row; corrected
+  documentation line endings before the final check.
+
+### Final scope and security review
+
+17 pending files (four new), all unstaged:
+docs/PROJECT_STATE.md, docs/RELEASE_GATES.md, docs/TASKS.md;
+frontend/index.html, frontend/playwright.config.ts, frontend/e2e/history.spec.ts,
+frontend/e2e/platform.spec.ts (new), frontend/src/App.tsx,
+frontend/src/HistoricalTrends.tsx, frontend/src/PlatformIntelligence.tsx (new),
+frontend/src/api.ts, frontend/src/styles.css, frontend/src/history.test.tsx,
+frontend/src/platform.test.tsx (new), frontend/src/test/fixtures.ts,
+frontend/src/test/historyFixtures.ts, frontend/src/test/platformFixtures.ts (new).
+
+Security command: `& .\scripts\security_check.ps1`; exit 0, 64 tracked/index files,
+zero confirmed violations, 10 existing manual leads (five expressions in index
+and working tree). All dispositioned after source review:
+
+- api/config.py line 30: SecretStr password field declaration, no embedded value.
+- api/providers.py line 86: runtime server binding, no embedded database endpoint.
+- api/providers.py line 89: injected secret binding, no embedded value or logging.
+- frontend/e2e/dashboard.spec.ts line 14: loopback hostname equality, benign scanner
+  expression match, not an operational endpoint.
+- docs/PROJECT_STATE.md historical server-reuse setting: scanner matches the suffix
+  of a local test setting; no database endpoint or secret. Historical evidence is
+  retained unchanged. Each expression generates two leads; none is unresolved.
+
+Four untracked TS/TSX files were explicitly reviewed as ordinary text (no links,
+NUL or oversized files) and scanned using the unchanged scanner's Inspect-Text
+function extracted through PowerShell AST: zero additional manual leads. Scanner
+rules were not edited. The scanner still reports REVIEW REQUIRED; the documented
+human dispositions above resolve these leads, not a change to scanner behavior.
+Final `git diff --check` and protected-file comparison to HEAD passed (exit 0).
+The index is empty; generated build/browser/log/cache outputs are confirmed ignored.
+
+Backend, simulator, readiness engine, protected tests, FIS-001/FIS-002/FIS-003,
+contracts and dependency manifests/lockfile remain unchanged. Runtime clients use
+fixed same-origin paths; browser requests are constrained to loopback; no runtime
+CDN or external service is introduced. No internal hierarchy fields are displayed.
+Backend/portable/engineering-harness suites are deliberately NOT RUN under this
+frontend-only task. Earlier 160/155/12 results remain historical, not new evidence.
+Physical devices/iOS/WebKit, comprehensive accessibility audit, actual SQL,
+prediction compatibility, authentication and FIS-002 offline acceptance remain
+unverified/deferred. No installation, staging, commit, push or deployment occurred.
+Stop at chief-architect review.
+
+## Phase 03C-1B.1 React Platform Intelligence implementation - 2026-11-22
+
+Branch feature/phase03c1b-react-platform, unchanged starting HEAD
+693c7b56aa894de98ebd6730e811864d5f45edca (merged Phase 03C-1A backend).
+The previous interrupted write was never executed; this step writes the assessed
+frontend implementation directly in the existing working tree. It does not repeat
+previous discovery or Python/backend/portable/engineering-harness verification.
+
+### Implemented source behavior (runtime verification pending)
+
+api.ts adds typed platform comparison/history clients for the three approved fixed
+same-origin endpoints. Options/comparisons load in parallel using the effective
+snapshot date and command. Responses require synthetic source/header consistency,
+exact expected fields, allowlisted label syntax, finite percentages, safe integer
+counts, all six statuses, PMC count consistency and current population reconciliation
+against the actual snapshot. No new fixed 160/40 population assumptions are used
+by platform validation. A streamed 262,144-byte limit bounds JSON before parsing;
+comparison/list lengths cap at 32, daily series at 365. Dates/windows/order and
+final-series-point equality to the selected comparison row are validated.
+No readiness formula or averaging of percentages is implemented in React.
+
+PlatformIntelligence.tsx adds a separate comparison table, platform selector and
+platform history with shared 30/90/180/365-day window state. Selections affect only
+this section, not existing fleet/command metrics or filters. Snapshot changes
+cancel old platform requests; platform/window changes cancel old series requests.
+Identity/key guards prevent stale rows or charts appearing under new selections,
+even if transport completes late. Errors/retries are contained in this section;
+SQL detection still invokes the existing whole-demo source block. Raw API details
+and unexpected/internal fields are not displayed; no fallback observations exist.
+
+HistoricalTrends exports its existing chart for reuse with optional platform
+context, distinct labels/test IDs and a memoized daily table. Original Home/End/
+arrow inspection, native slider, pointer behavior and touch-action auto remain.
+CSS reuses existing light/dark tokens and locally scrollable tables/plots; mobile
+controls stack. Product branding, page heading, footer, browser title and metadata
+now identify Fleet Intelligence Suite / Fleet Intelligence Dashboard. The existing
+fictional-data and unauthenticated-local-use notice is unchanged.
+
+The React review checklist was applied by source inspection: effect cleanup and
+stable source callbacks, derived selection state, no inline component definitions,
+parallel independent fetches, memoized chart/table work, labelled controls and
+focusable scroll regions. This is not executed accessibility/browser evidence.
+
+### Checks and deferred verification
+
+`npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache run check`
+from frontend passed (TypeScript tsc --noEmit, exit 0). The first check found two
+assertion-narrowing errors in new validators; both were corrected. Final source
+passed the focused check. No packages were installed.
+
+By the user's explicit Phase 03C-1B.1 instruction, no Vitest, Playwright, production
+build, backend, portable or engineering-harness suites were run. Prior backend
+160/160, portable 155/155 and harness 12/12 are retained baseline evidence only,
+not verification of this frontend. Tests/fixtures have not been modified in this
+implementation step. Static Git/security review results are in the task response.
+
+Phase 03C-1B.2 must add focused platform API/component tests and adapt existing
+fixtures to the new requests and product identity. Browser assertions that use
+global row/chart selectors must distinguish overall history from platform tables.
+Verify count/status reconciliation, endpoint/source/header/payload bounds, all
+windows, independent/combined selections, stale completion and abort behavior,
+CSV/unsupported states, SQL blocking and raw-detail/hierarchy rejection. Run the
+frontend typecheck/unit/build/relevant Playwright gates, both-theme desktop/tablet/
+mobile and actual touch-scroll checks; capture new screenshots and security
+findings. No runtime integration, responsiveness, accessibility, security acceptance
+or frontend regression pass is claimed by this implementation-only step.
+
+Files: frontend/src/api.ts, frontend/src/App.tsx,
+frontend/src/HistoricalTrends.tsx, frontend/src/PlatformIntelligence.tsx,
+frontend/src/styles.css, frontend/index.html; docs/PROJECT_STATE.md,
+docs/TASKS.md and docs/RELEASE_GATES.md. Backend/simulator/readiness, dependencies,
+FIS-001/FIS-002/FIS-003 and permanent architecture contracts remain unchanged.
+All changes remain unstaged and uncommitted for chief-architect source review.
+
 ## Phase 03C-1A platform-aware historical backend - 2026-11-22
 
 Branch feature/phase03c1-platform-intelligence, clean base

@@ -31,6 +31,7 @@ export function historySeries(snapshot = historySnapshot(), days: HistoryWindow 
 export function stubHistory() {
   const mock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
     const url = new URL(String(input), 'http://127.0.0.1:5173');
+    if (url.pathname === '/api/v1/platforms' || url.pathname.startsWith('/api/v1/readiness/history/platforms')) return jsonResponse({ detail: 'Not Found' }, 404);
     if (url.pathname === '/health') return jsonResponse({ source: 'synthetic', status: 'ok' });
     const date = url.searchParams.get('date') || url.searchParams.get('end_date') || '2026-11-20';
     const snapshot = historySnapshot(date, url.searchParams.get('command'));

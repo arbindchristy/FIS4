@@ -49,7 +49,7 @@ describe('historical dashboard', () => {
     await user.click(screen.getByRole('button', { name: 'Use dark theme' }));
     expect(screen.getByRole('button', { name: 'Use light theme' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('serviceability')).toHaveTextContent('82.8%');
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Helicopter');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Fleet Intelligence Dashboard');
   });
   it('uses every API observation without smoothing and exposes keyboard/table values', async () => {
     stubHistory(); const user = userEvent.setup(); render(<App />);

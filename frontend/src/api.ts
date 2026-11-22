@@ -74,8 +74,29 @@ function distribution(value: unknown): Distribution {
   return value as unknown as Distribution;
 }
 
+/** Bound platform JSON before parsing, including responses without Content-Length. */
+async function boundedJson(response: Response, maxBytes: number): Promise<unknown> {
+  const declared = response.headers.get('Content-Length');
+  if (declared !== null && (!/^[0-9]+$/.test(declared) || Number(declared) > maxBytes)) contract();
+  const reader = response.body?.getReader();
+  if (!reader) contract();
+  let bytes = 0;
+  let text = '';
+  const decoder = new TextDecoder();
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > maxBytes) { await reader.cancel(); contract(); }
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    return JSON.parse(text + decoder.decode()) as unknown;
+  } finally { reader.releaseLock(); }
+}
+
 /** Only same-origin fixed paths are used; no credentials, external URL or provider selector. */
-async function request(path: string, signal: AbortSignal, reportSource: (source: Source) => void): Promise<unknown> {
+async function request(path: string, signal: AbortSignal, reportSource: (source: Source) => void, maxBytes?: number): Promise<unknown> {
   if (signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -89,8 +110,9 @@ async function request(path: string, signal: AbortSignal, reportSource: (source:
     });
     const header = response.headers.get('X-FIS4-Data-Source');
     if (isSource(header)) reportSource(header);
+    if (header === 'sql') throw new DashboardError('source', 'SQL is configured. This demonstration accepts synthetic data only.', 'sql');
     let body: unknown;
-    try { body = await response.json(); } catch { contract(); }
+    try { body = maxBytes === undefined ? await response.json() : await boundedJson(response, maxBytes); } catch { contract(); }
     if (signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
     const source = isObject(body) && isSource(body.source) ? body.source : isSource(header) ? header : undefined;
     if (source) reportSource(source);
@@ -98,9 +120,11 @@ async function request(path: string, signal: AbortSignal, reportSource: (source:
       reportSource('sql');
       throw new DashboardError('source', 'SQL is configured. This demonstration accepts synthetic data only; no further data requests will be made.', 'sql');
     }
+    if (maxBytes !== undefined && response.ok && header !== 'synthetic') contract();
     if (header !== null && (!isSource(header) || (isObject(body) && body.source !== undefined && body.source !== header))) contract();
     if (!response.ok) {
-      if (path.startsWith('/api/v1/readiness/history/series?') && response.status === 404
+      if ((path.startsWith('/api/v1/readiness/history/series?') || path.startsWith('/api/v1/platforms')
+          || path.startsWith('/api/v1/readiness/history/platforms')) && response.status === 404
           && header === 'synthetic' && isObject(body) && body.detail === 'Not Found') {
         throw new DashboardError('unsupported', 'Historical trends are not enabled for this provider. Snapshot controls remain available.', source);
       }
@@ -194,5 +218,106 @@ export async function loadSeries(snapshot: Dashboard, days: HistoryWindow, signa
   if (![...countKeys, 'svc_pct', 'avail_pct'].every(key =>
     Math.abs(last[key as keyof Metrics] - snapshot.fleet.metrics[key as keyof Metrics]) < 1e-8)) contract();
   if (!STATUSES.every(code => last.status_counts[code] === snapshot.distribution.statuses.find(row => row.status === code)?.count)) contract();
+  return series;
+}
+
+
+export type PlatformRow = Metrics & { platform: string; status_counts: Observation['status_counts'] };
+export type PlatformData = { options: string[]; rows: PlatformRow[] };
+export type PlatformSeries = HistorySeries & { platform: string };
+const platformPattern = /^[A-Z0-9][A-Z0-9-]{0,31}$/;
+const isPlatform = (value: unknown): value is string => typeof value === 'string' && platformPattern.test(value);
+const platformBytes = 262144;
+const metricKeys = [...countKeys, 'svc_pct', 'avail_pct'] as const;
+
+function keys(value: Record<string, unknown>, expected: readonly string[]) {
+  if (Object.keys(value).length !== expected.length || !expected.every(key => Object.hasOwn(value, key))) contract();
+}
+
+function canonicalCounts(value: unknown): asserts value is Metrics & Record<string, unknown> & { status_counts: Observation['status_counts'] } {
+  metrics(value);
+  const row = value as Metrics & Record<string, unknown>;
+  if (!isObject(row.status_counts)) contract();
+  const counts = row.status_counts;
+  keys(counts, STATUSES);
+  if (!STATUSES.every(code => isCount(counts[code]) && counts[code] <= row.total_tails)
+      || STATUSES.reduce((sum, code) => sum + (counts[code] as number), 0) !== row.total_tails
+      || counts.FMC !== row.fmc_tails || counts.NMCS !== row.nmcs_tails
+      || counts.NMCM !== row.nmcm_tails || counts.DEPOT !== row.depot_tails
+      || (counts.PMCM as number) + (counts.PMCS as number) !== row.pmc_tails) contract();
+}
+
+function platformSnapshot(snapshot: Dashboard) {
+  if (snapshot.fleet.source !== 'synthetic' || !validDate(snapshot.fleet.date)
+      || (snapshot.fleet.command !== null && !isCommand(snapshot.fleet.command))) contract();
+}
+
+/** Counts reconcile to the actual selected snapshot; no synthetic population constants or percentage formulas. */
+export async function loadPlatforms(snapshot: Dashboard, signal: AbortSignal,
+  reportSource: (source: Source) => void): Promise<PlatformData> {
+  platformSnapshot(snapshot);
+  const list = new URLSearchParams();
+  if (snapshot.fleet.command) list.set('command', snapshot.fleet.command);
+  const comparison = new URLSearchParams({ date: snapshot.fleet.date });
+  if (snapshot.fleet.command) comparison.set('command', snapshot.fleet.command);
+  const [options, report] = await Promise.all([
+    request(`/api/v1/platforms${list.size ? `?${list}` : ''}`, signal, reportSource, platformBytes),
+    request(`/api/v1/readiness/history/platforms?${comparison}`, signal, reportSource, platformBytes),
+  ]);
+  if (!isObject(options) || options.source !== 'synthetic' || options.command !== snapshot.fleet.command
+      || !Array.isArray(options.platforms) || options.platforms.length > 32) contract();
+  keys(options, ['source', 'command', 'platforms']);
+  const labels = options.platforms;
+  if (!labels.every(isPlatform) || new Set(labels).size !== labels.length
+      || labels.some((label, index) => index > 0 && label <= labels[index - 1])) contract();
+  metadata(report);
+  keys(report, ['source', 'date', 'command', 'platform', 'platforms']);
+  if (report.source !== 'synthetic' || report.date !== snapshot.fleet.date
+      || report.command !== snapshot.fleet.command || report.platform !== null
+      || !Array.isArray(report.platforms) || report.platforms.length > 32) contract();
+  if (!labels.length && !report.platforms.length) throw new DashboardError('empty', 'No platform observations are available.');
+  const rows = report.platforms.map(value => {
+    if (!isObject(value)) contract();
+    keys(value, ['platform', ...metricKeys, 'status_counts']);
+    canonicalCounts(value);
+    if (!isPlatform(value.platform)) contract();
+    return value as PlatformRow;
+  });
+  if (rows.length !== labels.length || new Set(rows.map(row => row.platform)).size !== rows.length
+      || !labels.every(label => rows.some(row => row.platform === label))) contract();
+  if (!countKeys.every(key => rows.reduce((sum, row) => sum + row[key], 0) === snapshot.fleet.metrics[key])
+      || snapshot.distribution.total_tails !== snapshot.fleet.metrics.total_tails
+      || snapshot.distribution.date !== snapshot.fleet.date || snapshot.distribution.command !== snapshot.fleet.command
+      || !STATUSES.every(code => rows.reduce((sum, row) => sum + row.status_counts[code], 0)
+        === snapshot.distribution.statuses.find(row => row.status === code)?.count)) contract();
+  return { options: labels, rows };
+}
+
+export async function loadPlatformSeries(snapshot: Dashboard, selected: PlatformRow, days: HistoryWindow,
+  signal: AbortSignal, reportSource: (source: Source) => void): Promise<PlatformSeries> {
+  platformSnapshot(snapshot);
+  if (!isPlatform(selected.platform) || !WINDOWS.includes(days)) contract();
+  const params = new URLSearchParams({ end_date: snapshot.fleet.date, days: String(days), platform: selected.platform });
+  if (snapshot.fleet.command) params.set('command', snapshot.fleet.command);
+  const value = await request(`/api/v1/readiness/history/platforms/series?${params}`, signal, reportSource, platformBytes);
+  if (!isObject(value)) contract();
+  keys(value, ['source', 'command', 'requested_days', 'start_date', 'end_date', 'point_count', 'observations', 'platform']);
+  if (value.source !== 'synthetic' || value.command !== snapshot.fleet.command || value.platform !== selected.platform
+      || value.requested_days !== days || value.end_date !== snapshot.fleet.date
+      || typeof value.start_date !== 'string' || !validDate(value.start_date)
+      || !isCount(value.point_count) || !Array.isArray(value.observations) || value.observations.length > 365) contract();
+  if (!value.observations.length) throw new DashboardError('empty', 'No platform history is available.');
+  const span = (Date.parse(snapshot.fleet.date) - Date.parse(value.start_date)) / dayMillis + 1;
+  if (span !== value.point_count || span !== value.observations.length || span < 1 || span > days) contract();
+  for (const [index, point] of value.observations.entries()) {
+    if (!isObject(point)) contract();
+    keys(point, [...metricKeys, 'date', 'status_counts']);
+    canonicalCounts(point);
+    if (point.date !== new Date(Date.parse(value.start_date) + index * dayMillis).toISOString().slice(0, 10)) contract();
+  }
+  const series = value as unknown as PlatformSeries;
+  const last = series.observations.at(-1)!;
+  if (!metricKeys.every(key => Math.abs(last[key] - selected[key]) < 1e-8)
+      || !STATUSES.every(code => last.status_counts[code] === selected.status_counts[code])) contract();
   return series;
 }

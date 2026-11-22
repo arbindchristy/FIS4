@@ -183,3 +183,13 @@ thead th { background: var(--soft); position: sticky; top: 0; }
 @media (max-width: 1200px) { .filter-panel { grid-template-columns: 1fr 1fr; } .filter-title { grid-column: 1 / 3; } .filter-actions { grid-column: 1 / 3; justify-content: flex-end; } .report-grid { grid-template-columns: 1fr; } }
 @media (max-width: 850px) { main { padding: 25px 24px 0; } .topbar { padding: 18px 24px; } .topbar-context > span:first-child { display: none; } .count-grid { grid-template-columns: repeat(3, 1fr); } .kpi-card { padding: 20px; } .kpi-eyebrow { gap: 7px; } .kpi-eyebrow > span:last-child { display: none; } }
 @media (max-width: 560px) { main { padding: 22px 16px 0; } .topbar { padding: 16px; gap: 14px; } .brand div > span { display: none; } .brand-mark { width: 36px; height: 36px; } .topbar-context { gap: 0; } .source-badge { padding: 6px 8px; font-size: .75rem; } .page-heading { align-items: start; } .page-heading > div > p:last-child { font-size: .875rem; } .snapshot-meta { min-width: 116px; } .snapshot-meta > span:first-child { font-size: .65rem; } .snapshot-meta strong { font-size: .875rem; } .demo-notice div > span { display: block; margin-top: 3px; } .filter-panel { gap: 17px; padding: 17px; } .filter-title { grid-column: auto; } .filter-panel { grid-template-columns: 1fr; } .filter-actions { grid-column: auto; flex-wrap: wrap; justify-content: start; } .kpi-grid { grid-template-columns: 1fr; gap: 14px; } .kpi-value { font-size: 2.7rem; } .count-grid { gap: 9px; } .count-card { padding: 13px; } .panel { padding: 20px 16px; } .panel-heading { align-items: start; } .meter-row { grid-template-columns: 98px 1fr 55px; gap: 8px; } .meter-row label, .meter-row strong { font-size: .75rem; } .status-label > span:nth-child(2) { max-width: 140px; } .section-caption > span { display: none; } .data-note { text-align: left; } footer { flex-direction: column; gap: 3px; } }
+
+.platform-panel { margin-bottom: 24px; }
+.platform-panel .panel-heading { margin-bottom: 8px; }
+.platform-context { color: var(--ink); font-size: .875rem; font-weight: 600; }
+.platform-note { color: var(--muted); font-size: .875rem; margin: 6px 0 16px; }
+.platform-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin: 20px 0; max-width: 600px; }
+.platform-history { margin-top: 10px; }
+.brand { min-width: 0; }
+.brand-mark { flex-shrink: 0; }
+@media (max-width: 560px) { .brand strong { font-size: .9rem; letter-spacing: 0; } .platform-controls { grid-template-columns: 1fr; } }

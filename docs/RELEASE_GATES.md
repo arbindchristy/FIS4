@@ -1,5 +1,41 @@
 # FIS4 release gates
 
+## Phase 03C-1B.2 frontend verification review gate
+
+- TypeScript, 122/122 unit tests and production build pass, exit 0.
+- Full Edge browser suite: 41 pass/four intentional non-mobile touch skips,
+  45 total, no retries; strengthened preservation follow-up six/six pass.
+- Actual synthetic contracts, six-status count reconciliation, combined filters,
+  all windows, safe errors/source blocking and cancellation/stale protection tested.
+- Both overview percentages and command cards remain API-owned and unchanged by
+  platform selection. No readiness formulas or fallback observations in React.
+- Desktop/tablet/mobile, light/dark, keyboard inspection and actual CDP mobile touch
+  pass; six final platform screenshots visually reviewed and retained locally.
+- Security exit 0: zero confirmed violations, 10 existing leads dispositioned;
+  explicit four-new-file review adds zero leads. Scanner rules unchanged.
+- Only frontend/tests and three records changed; backend, simulator, decisions,
+  protected baseline and dependencies unchanged. No Python/harness suites repeated.
+- Physical devices/iOS/WebKit, full accessibility audit, actual SQL, prediction,
+  authentication and offline package acceptance remain deferred.
+- Await chief-architect review; no staging, publication or deployment.
+
+## Phase 03C-1B.1 frontend implementation gate
+
+- Platform clients/section written using existing React/Vite and design system;
+  comparisons reconcile counts to the effective snapshot; independent platform
+  drilldown and shared windows; no client-side readiness formulas.
+- Existing chart reused with platform context; cancellation/key guards and safe
+  contained error states implemented. Product identity updated; fictional/no-auth
+  warnings preserved. Runtime correctness remains to be verified.
+- Focused TypeScript check passed (exit 0), after correcting two new narrowing
+  errors. No dependency, backend, simulator, SQL or prediction changes.
+- Unit/browser/build and all Python suites were deliberately not run under the
+  user's implementation-only instruction. Previous backend evidence is historical.
+- Phase 03C-1B.2 must add/adapt frontend fixtures/tests, exercise reconciliation,
+  source isolation, malformed/stale responses, all windows, both themes and mobile
+  touch/keyboard behavior, then run frontend gates and applicable security checks.
+- Await chief-architect source review; no staging, publication or deployment.
+
 ## Phase 03C-1A platform backend review gate
 
 - Synthetic-only platform metadata; stable tail/platform/current-command identity;

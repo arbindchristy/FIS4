@@ -10,9 +10,9 @@ export default defineConfig({
     { name: 'desktop', testMatch: 'dashboard.spec.ts', use: { viewport: { width: 1440, height: 1000 } } },
     { name: 'tablet-portrait', testMatch: 'dashboard.spec.ts', use: { viewport: { width: 768, height: 1024 } } },
     { name: 'tablet-landscape', testMatch: 'dashboard.spec.ts', use: { viewport: { width: 1024, height: 768 } } },
-    { name: 'history-desktop', testMatch: 'history.spec.ts', use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 1440, height: 1000 } } },
-    { name: 'history-tablet', testMatch: 'history.spec.ts', use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 768, height: 1024 } } },
-    { name: 'history-mobile', testMatch: 'history.spec.ts', use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 390, height: 844 } } },
+    { name: 'history-desktop', testMatch: ['history.spec.ts', 'platform.spec.ts'], use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 1440, height: 1000 } } },
+    { name: 'history-tablet', testMatch: ['history.spec.ts', 'platform.spec.ts'], use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 768, height: 1024 } } },
+    { name: 'history-mobile', testMatch: ['history.spec.ts', 'platform.spec.ts'], use: { baseURL: 'http://127.0.0.1:5174', viewport: { width: 390, height: 844 } } },
   ],
   webServer: [
     {

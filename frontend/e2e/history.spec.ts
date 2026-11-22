@@ -52,10 +52,11 @@ test('real history values, keyboard chart, six statuses, themes and responsive s
   await page.keyboard.press('End');
   await expect(page.getByTestId('trend-detail')).toContainText(series.observations.at(-1).svc_pct.toFixed(1));
   await page.getByText('View daily readiness data (30 days)').click();
-  await expect(page.getByRole('table')).toBeVisible();
-  await expect(page.getByRole('row')).toHaveCount(31);
+  const historyTable = page.getByRole('region', { name: 'Historical data table', exact: true });
+  await expect(historyTable.getByRole('table')).toBeVisible();
+  await expect(historyTable.getByRole('row')).toHaveCount(31);
   for (const status of ['FMC', 'PMCM', 'PMCS', 'NMCS', 'NMCM', 'DEPOT']) {
-    await expect(page.getByRole('columnheader', { name: status, exact: true })).toBeVisible();
+    await expect(historyTable.getByRole('columnheader', { name: status, exact: true })).toBeVisible();
     await expect(page.getByLabel(`${status} status`, { exact: true })).toBeVisible();
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -65,7 +66,7 @@ test('all windows and command/date filters stay aligned with actual backend snap
   await page.goto('/');
   await expect(page.getByTestId('serviceability-line')).toBeVisible();
   for (const days of [30, 90, 180, 365]) {
-    await page.getByLabel('Historical window').selectOption(String(days));
+    await page.getByLabel('Historical window', { exact: true }).selectOption(String(days));
     await expect(page.getByText(`View daily readiness data (${days} days)`)).toBeVisible();
   }
   await page.getByLabel('Command', { exact: true }).selectOption('FICTIONAL_C');
@@ -92,7 +93,7 @@ test('malformed/unavailable history stays separate from snapshots and SQL remain
   await page.getByRole('button', { name: 'Retry history' }).click();
   await expect(page.getByTestId('serviceability-line')).toBeVisible();
   await page.route('**/api/v1/readiness/history/series?*', route => route.abort());
-  await page.getByLabel('Historical window').selectOption('90');
+  await page.getByLabel('Historical window', { exact: true }).selectOption('90');
   await expect(page.getByRole('alert')).toContainText('Historical data unavailable');
   await page.unroute('**/api/v1/readiness/history/series?*');
   await page.route('**/api/v1/readiness/history/series?*', route => route.fulfill({ status: 503,
@@ -127,7 +128,7 @@ test('switching windows aborts obsolete requests and ignores a delayed response'
   });
   await page.goto('/');
   await expect.poll(() => captured).toBe(true);
-  await page.getByLabel('Historical window').selectOption('90');
+  await page.getByLabel('Historical window', { exact: true }).selectOption('90');
   await expect(page.getByText('View daily readiness data (90 days)')).toBeVisible();
   await expect.poll(() => cancelled).toBe(true);
   release(); await done;

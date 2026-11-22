@@ -158,7 +158,7 @@ button.secondary:hover { background: var(--soft); }
 .trend-legend { border: 0; padding: 16px 0 4px; color: var(--ink); flex-wrap: wrap; gap: 14px 25px; }
 .line-key { display: inline-block; width: 25px; border-top: 3px solid var(--svc); }
 .line-key.avail { border-color: var(--avail); border-top-style: dashed; }
-.trend-chart { width: 100%; height: auto; display: block; overflow: visible; margin-top: 10px; touch-action: pan-y; }
+.trend-chart { width: 100%; height: auto; display: block; overflow: visible; margin-top: 10px; touch-action: auto; }
 .trend-chart text { fill: var(--muted); font-size: 18px; font-family: inherit; }
 .chart-scroll { overflow-x: auto; }
 .plot-help { color: var(--muted); font-size: .75rem; margin: 3px 0 10px; }

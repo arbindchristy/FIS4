@@ -134,3 +134,43 @@ test('switching windows aborts obsolete requests and ignores a delayed response'
   await expect(page.getByText('View daily readiness data (90 days)')).toBeVisible();
   expect((await page.getByTestId('serviceability-line').getAttribute('points'))!.split(' ')).toHaveLength(90);
 });
+
+test.describe('mobile chart touch scrolling', () => {
+  test.use({ hasTouch: true });
+
+  test('horizontal touch swipe scrolls the plot in both themes and preserves inspection', async ({ page, context }, info) => {
+    test.skip(info.project.name !== 'history-mobile', 'Touch overflow regression uses the narrow mobile viewport.');
+    const input = await context.newCDPSession(page);
+    try {
+      for (const theme of ['light', 'dark']) {
+        await page.goto('/');
+        await expect(page.getByTestId('serviceability-line')).toBeVisible();
+        if (theme === 'dark') await page.getByRole('button', { name: 'Use dark theme' }).click();
+        await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
+        const plot = page.getByRole('region', { name: 'Historical trend plot', exact: true });
+        await plot.scrollIntoViewIfNeeded();
+        const bounds = (await plot.boundingBox())!;
+        const before = await plot.evaluate(element => ({ left: element.scrollLeft, width: element.clientWidth, content: element.scrollWidth }));
+        expect(before.content).toBeGreaterThan(before.width);
+        const startX = bounds.x + bounds.width - 24;
+        const y = bounds.y + bounds.height / 2;
+        await input.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: startX, y, id: 0 }] });
+        for (let step = 1; step <= 12; step++) {
+          await input.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: startX - step * 15, y, id: 0 }] });
+          await page.waitForTimeout(20); // Pace the touch drag; never set scrollLeft or dispatch DOM events.
+        }
+        await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await expect.poll(() => plot.evaluate(element => element.scrollLeft)).toBeGreaterThan(before.left + 60);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        const chart = page.getByRole('img', { name: /Daily serviceability and availability/ });
+        await chart.focus();
+        await page.keyboard.press('Home');
+        await expect(page.getByTestId('trend-detail')).toContainText('22 Oct 2026');
+        await page.keyboard.press('ArrowRight');
+        await expect(page.getByTestId('trend-detail')).toContainText('23 Oct 2026');
+        await page.keyboard.press('End');
+        await expect(page.getByTestId('trend-detail')).toContainText('20 Nov 2026');
+      }
+    } finally { await input.detach(); }
+  });
+});

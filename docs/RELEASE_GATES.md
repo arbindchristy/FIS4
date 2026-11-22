@@ -1,5 +1,18 @@
 # FIS4 release gates
 
+## PR #7 mobile chart touch-scroll fix
+
+- The new real browser touch-input regression reproduces zero movement before
+  the CSS fix and verifies horizontal movement above 60 px in both themes after it.
+- All 12 original history browser cases pass; the mobile regression adds one
+  passing case and is intentionally skipped on desktop/tablet (13 pass, 2 skip).
+- TypeScript, 61 component tests, production build and 139 backend regressions pass.
+- Recovered harness result: exit 0, 12/12 checks including 134 passing portable
+  tests; five external-reference tests excluded. No repeat needed for publication.
+- Only the SVG touch-action value changes application behavior; readiness rules,
+  backend, simulator, API contracts and dependencies remain unchanged.
+- Physical mobile devices and iOS/WebKit remain unverified; no deployment acceptance.
+
 ## Phase 03B-2B Task 2 React historical dashboard acceptance
 
 | Gate | Actual evidence / limit |

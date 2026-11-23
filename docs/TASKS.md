@@ -1,7 +1,26 @@
 # FIS4 task backlog
 
+## Render Free-only focused preflight - 2026-11-23
+
+Customer decision: Render Free USD 0/month only; supersedes the earlier paid-candidate
+recommendation below. Existing image reused; one 0.1 CPU/512 MiB startup, no rebuild.
+Probe exit 0: readiness 557.6507 s; peak 263.42 MiB, warm 212.44 MiB; zero OOM.
+20 sequential API, four concurrent requests and five subsequent health checks pass.
+Focused portable deployment-test TypeScript exit 0; two browser cases pass in 6.3 s.
+Original Docker/runtime/lock/POC spec unchanged; no application or dependency changes.
+CONDITIONAL GO for pre-warmed fictional demo only. Actual Render build/idle wake,
+unauthenticated public exposure approval and USD 0 billing guards remain open.
+Git-backed Docker needs no external registry; exact ten-file PR allowlist, commands,
+limits, security dispositions, smoke/rollback steps: deploy/demo/PREFLIGHT_REPORT.md.
+No stage/commit/push/PR/deployment/account or billing operation performed.
+Final security exit 0: 71 tracked/index files, zero violations; ten existing benign
+leads dispositioned in report. Eight untracked files: zero extra leads. Whitespace,
+protected scope, empty index and five original deployment file hashes PASS.
+
+
 | Item | Status | Evidence or next action |
 |---|---|---|
+| Synthetic Docker/Render preflight | Completed report; conditional approval gate | Reused main-based image and evidence; nine constrained browser cases pass; see deploy/demo/PREFLIGHT_REPORT.md; access/cost, portable test, CVE and actual Render acceptance pending; no publication |
 | P0 command-filter correction | Corrected; acceptance passed; chief-architect source review pending | Selected snapshot authoritative; old behavior fails three new cases; 136 regression, eight final scope, 47 browser passes/four skips plus three final demos; TypeScript/build/security pass; evidence/matrix in PROJECT_STATE |
 | Command-centric readiness | Implemented; local verification passed; chief-architect review pending | One summary/command with nested platforms; 128 unit tests, six final command tests, TypeScript/build pass; browser 44 pass/four intentional skips; security zero violations/10 benign leads; no publication |
 | Phase 03C-1B.2 frontend verification | Local gates passed; chief-architect review pending | 122/122 unit tests; TypeScript/build exit 0; full browser 41 passed/four intentional skips; strengthened follow-up six passed; actual mobile touch in both themes; security dispositions in PROJECT_STATE; no publication |

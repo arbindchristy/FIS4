@@ -1,5 +1,39 @@
 # FIS4 release gates
 
+## Render Free-only focused preflight - 2026-11-23
+
+Customer decision: Render Free USD 0/month only; supersedes the earlier paid-candidate
+recommendation below. Existing image reused; one 0.1 CPU/512 MiB startup, no rebuild.
+Probe exit 0: readiness 557.6507 s; peak 263.42 MiB, warm 212.44 MiB; zero OOM.
+20 sequential API, four concurrent requests and five subsequent health checks pass.
+Focused portable deployment-test TypeScript exit 0; two browser cases pass in 6.3 s.
+Original Docker/runtime/lock/POC spec unchanged; no application or dependency changes.
+CONDITIONAL GO for pre-warmed fictional demo only. Actual Render build/idle wake,
+unauthenticated public exposure approval and USD 0 billing guards remain open.
+Git-backed Docker needs no external registry; exact ten-file PR allowlist, commands,
+limits, security dispositions, smoke/rollback steps: deploy/demo/PREFLIGHT_REPORT.md.
+No stage/commit/push/PR/deployment/account or billing operation performed.
+Final security exit 0: 71 tracked/index files, zero violations; ten existing benign
+leads dispositioned in report. Eight untracked files: zero extra leads. Whitespace,
+protected scope, empty index and five original deployment file hashes PASS.
+
+
+## Synthetic Docker/Render demo preflight gate
+
+- Existing main-based image/build evidence accepted without repeating the build.
+  Fixed synthetic launcher, original business APIs/formulas, compiled local assets,
+  one worker and no SQL/models/customer data; no HTTP source/debug/docs exposure.
+- 0.5 CPU/512 MiB local profile measured: 94.12 s readiness, 276.64 MiB peak,
+  217.77 MiB warm; nine focused constrained-browser cases pass. Details and exact
+  commands in deploy/demo/PREFLIGHT_REPORT.md; not Render performance evidence.
+- CONDITIONAL GO: access/origin controls and paid compute require explicit approval.
+  No authentication is implemented. Minimum local demo candidate Starter; no free
+  tier reliability claim. Actual Render configuration/rollback remains untested.
+- Portable PR test adaptation, final staged security, vulnerability/supply-chain
+  review and approved immutable registry digest remain future publication gates.
+- Preserve FIS-001/FIS-002/FIS-003 and the separate Windows offline-package gates.
+  No public deployment, registry push, purchase, commit or PR performed.
+
 ## P0 selected-command reporting gate
 
 - This correction supersedes the earlier fleet-always presentation rule. All Commands

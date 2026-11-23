@@ -153,7 +153,7 @@ describe('platform dashboard integration', () => {
     expect(screen.getByRole('button', { name: 'Use light theme' })).toHaveAttribute('aria-pressed', 'true');
     expect(section().queryByText(/battalion|FICTIONAL_PRIVATE_MARKER/i)).not.toBeInTheDocument();
   });
-  it('synchronizes date, command, platform and both window controls without changing overview cards', async () => {
+  it('synchronizes command overview, date, platform and both window controls', async () => {
     const fetch = stubPlatforms(); const user = userEvent.setup(); render(<App />);
     await screen.findByTestId('serviceability');
     fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
@@ -169,7 +169,7 @@ describe('platform dashboard integration', () => {
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
     fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_B'));
     await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line');
-    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('160');
+    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('40');
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('20 Nov 2024');
     await user.selectOptions(screen.getByLabelText('Platform', { exact: true }), labels[1]);
     await waitFor(() => expect(section().getByTestId('platform-trend-detail')).toHaveTextContent('91.1%'));
@@ -245,6 +245,6 @@ describe('platform dashboard integration', () => {
     await act(async () => held?.(jsonResponse(comparison())));
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('20 Nov 2024');
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('FICTIONAL_A');
-    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('160');
+    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('40');
   });
 });

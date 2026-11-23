@@ -88,7 +88,7 @@ test('command/date/platform and every history window align with backend while ov
   await page.getByText('Platform breakdown for Command FICTIONAL_B', { exact: true }).click();
   await expect(section.getByTestId('platform-serviceability-line')).toBeVisible();
   await section.getByLabel('Platform', { exact: true }).selectOption('UH-60M');
-  const fleet = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20')).json();
+  const fleet = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20&command=FICTIONAL_B')).json();
   for (const days of [30, 90, 180, 365]) {
     await section.getByLabel('Platform historical window').selectOption(String(days));
     const body = await (await page.request.get(`${path}/series?end_date=2024-11-20&days=${days}&platform=UH-60M&command=FICTIONAL_B`)).json();
@@ -103,7 +103,7 @@ test('command/date/platform and every history window align with backend while ov
     await expect(section.locator('.platform-context')).toContainText('20 Nov 2024');
     await expect(section.locator('.platform-context')).toContainText('FICTIONAL_B');
   }
-  await expect(page.getByLabel('Total tails count')).toContainText('160');
+  await expect(page.getByLabel('Total tails count')).toContainText('40');
 });
 
 test('unsupported, network and SQL platform responses stay safe with retry and source blocking', async ({ page }) => {

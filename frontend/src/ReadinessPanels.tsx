@@ -10,28 +10,27 @@ const statusNames: Record<string, string> = {
 };
 
 export function ReadinessPanels({ data, children, days, setDays, blockSql }: { data: Dashboard; children?: ReactNode; days: HistoryWindow; setDays: (days: HistoryWindow) => void; blockSql: () => void }) {
-  const overview = data.overall ?? data;
-  const metrics = overview.fleet.metrics;
+  const metrics = data.fleet.metrics;
   const counts = [
     ['Total tails', metrics.total_tails], ['FMC', metrics.fmc_tails], ['PMC', metrics.pmc_tails],
     ['NMCS', metrics.nmcs_tails], ['NMCM', metrics.nmcm_tails], ['DEPOT', metrics.depot_tails],
   ] as const;
-  const statuses = [...overview.distribution.statuses].sort((a, b) => {
+  const statuses = [...data.distribution.statuses].sort((a, b) => {
     const first = STATUSES.indexOf(a.status as (typeof STATUSES)[number]);
     const second = STATUSES.indexOf(b.status as (typeof STATUSES)[number]);
     return (first < 0 ? 99 : first) - (second < 0 ? 99 : second);
   });
   return <>
-    <section className="kpi-grid" aria-label="Fleet readiness KPIs">
+    <section className="kpi-grid" aria-label={data.fleet.command ? `Command ${data.fleet.command} readiness KPIs` : 'Fleet readiness KPIs'}>
       <article className="kpi-card primary" aria-labelledby="serviceability-label">
-        <div className="kpi-eyebrow"><span className="metric-symbol" aria-hidden="true">S</span><h2 id="serviceability-label">Serviceability</h2><span>FLEET</span></div>
+        <div className="kpi-eyebrow"><span className="metric-symbol" aria-hidden="true">S</span><h2 id="serviceability-label">Serviceability</h2><span>{data.fleet.command ? `COMMAND ${data.fleet.command}` : 'FLEET'}</span></div>
         <p className="kpi-value" data-testid="serviceability">{percentage(metrics.svc_pct)}</p>
         <p className="kpi-description">Readiness against the serviceability population</p>
       </article>
       <article className="kpi-card" aria-labelledby="availability-label">
-        <div className="kpi-eyebrow"><span className="metric-symbol" aria-hidden="true">A</span><h2 id="availability-label">Availability</h2><span>FLEET</span></div>
+        <div className="kpi-eyebrow"><span className="metric-symbol" aria-hidden="true">A</span><h2 id="availability-label">Availability</h2><span>{data.fleet.command ? `COMMAND ${data.fleet.command}` : 'FLEET'}</span></div>
         <p className="kpi-value" data-testid="availability">{percentage(metrics.avail_pct)}</p>
-        <p className="kpi-description">Mission-capable aircraft across the total fleet</p>
+        <p className="kpi-description">Mission-capable aircraft across {data.fleet.command ? 'the selected command' : 'the total fleet'}</p>
       </article>
     </section>
     <section className="count-grid" aria-label="Aircraft counts">
@@ -49,7 +48,7 @@ export function ReadinessPanels({ data, children, days, setDays, blockSql }: { d
         </div>
       </section>
       <section className="panel status-panel" aria-labelledby="status-heading">
-        <div className="panel-heading"><div><p className="eyebrow">AIRCRAFT CONDITION</p><h2 id="status-heading">Status distribution</h2></div><span className="panel-meta">{count(overview.distribution.total_tails)} tails</span></div>
+        <div className="panel-heading"><div><p className="eyebrow">AIRCRAFT CONDITION</p><h2 id="status-heading">Status distribution</h2></div><span className="panel-meta">{count(data.distribution.total_tails)} tails</span></div>
         <div className="composition-bar" role="img" aria-label="Readiness composition for the reporting snapshot">{statuses.map(row => <span key={row.status} className={`composition-${row.status.toLowerCase()}`} style={{ width: `${row.pct}%` }} title={`${row.status}: ${row.count}`} />)}</div>
         <ul className="status-list">
           {statuses.map(row => <li key={row.status} className="status-row" aria-label={`${row.status} status`}>

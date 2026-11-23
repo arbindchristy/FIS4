@@ -9,7 +9,7 @@ export type Fleet = Metadata & { metrics: Metrics };
 export type Commands = Metadata & { commands: (Metrics & { command: string })[] };
 export type Distribution = Metadata & { total_tails: number; statuses: { status: string; count: number; pct: number }[] };
 type Snapshot = { fleet: Fleet; commands: Commands; distribution: Distribution };
-export type Dashboard = Snapshot & { availableCommands: string[]; overall?: Snapshot };
+export type Dashboard = Snapshot & { availableCommands: string[] };
 export type FailureKind = 'empty' | 'invalid' | 'unavailable' | 'contract' | 'source' | 'unsupported';
 
 export class DashboardError extends Error {
@@ -193,7 +193,7 @@ export async function loadDashboard(filters: Filters, signal: AbortSignal, repor
           && row[key as keyof Metrics] === selectedCommands.commands[0][key as keyof Metrics])) contract();
   }
   validateDistribution(selectedFleet, selectedDistribution);
-  return { fleet: selectedFleet, commands: selectedCommands, distribution: selectedDistribution, overall,
+  return { fleet: selectedFleet, commands: selectedCommands, distribution: selectedDistribution,
     availableCommands: allCommands.commands.map(row => row.command) };
 }
 

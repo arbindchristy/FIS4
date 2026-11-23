@@ -1,5 +1,24 @@
 # FIS4 release gates
 
+## P0 selected-command reporting gate
+
+- This correction supersedes the earlier fleet-always presentation rule. All Commands
+  shows the fleet; a selected command controls all primary KPIs, counts, distribution
+  and historical trend. Scope headings/labels must agree with the rendered snapshot.
+- Distinct fleet/A/B fixtures and a negative pre-fix run are required, alongside
+  actual HTTP/browser All -> A -> B -> All evidence. Passing counts alone do not
+  establish scope acceptance. Requirement-to-test mapping is in PROJECT_STATE.
+- Keep nested platforms command-owned, API percentages unchanged, and date/windows,
+  abort/stale/source/error guards intact. Failed command data must never substitute
+  fleet metrics or history. All Commands retains date; reset returns latest fleet.
+- TypeScript/build pass; 136 regression tests and eight final scope tests pass;
+  browser 47 pass/four intentional skips, plus three final scope demos pass. Security
+  exit 0, zero confirmed violations, 10 existing benign leads dispositioned.
+  Exact commands, HTTP evidence and requirement-to-test matrix are in PROJECT_STATE.
+- Protected backend, simulator, decisions, dependencies and historical engine remain
+  unchanged. Physical-device/iOS, actual SQL/authentication/offline acceptance remain
+  deferred. No staging/publication; chief-architect source review required.
+
 ## Command-centric readiness review gate
 
 - Exactly one primary summary per command; command-owned expandable platforms,

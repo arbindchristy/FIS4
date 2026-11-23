@@ -72,11 +72,11 @@ test('all windows and command/date filters stay aligned with actual backend snap
   await page.getByLabel('Command', { exact: true }).selectOption('FICTIONAL_C');
   await page.getByLabel('Snapshot date').fill('2024-11-20');
   await page.getByRole('button', { name: 'Apply filters' }).click();
-  const body = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20')).json();
+  const body = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20&command=FICTIONAL_C')).json();
   await expect(page.getByTestId('serviceability')).toHaveText(`${body.metrics.svc_pct.toFixed(1)}%`);
   await expect(page.getByTestId('trend-detail')).toContainText('20 Nov 2024');
   await expect(page.getByText('View daily readiness data (365 days)')).toBeVisible();
-  await expect(page.getByLabel('Total tails count')).toContainText('160');
+  await expect(page.getByLabel('Total tails count')).toContainText('40');
   await page.getByRole('button', { name: 'Latest snapshot' }).click();
   await expect(page.getByLabel('Total tails count')).toContainText('160');
   await expect(page.getByTestId('trend-detail')).toContainText('20 Nov 2026');
@@ -174,4 +174,56 @@ test.describe('mobile chart touch scrolling', () => {
       }
     } finally { await input.detach(); }
   });
+});
+
+test('acceptance demonstration: All Commands to A to B and back follows actual HTTP scope', async ({ page }, info) => {
+  const evidence: unknown[] = [];
+  const requests: string[] = [];
+  page.on('request', request => { const url = new URL(request.url()); if (url.pathname.startsWith('/api/')) requests.push(url.pathname + url.search); });
+  for (const [index, command] of ['', 'FICTIONAL_A', 'FICTIONAL_B', ''].entries()) {
+    const matching = (path: string) => (response: import('@playwright/test').Response) => {
+      const url = new URL(response.url()); return url.pathname === path && (url.searchParams.get('command') || '') === command;
+    };
+    const fleetReady = page.waitForResponse(matching('/api/v1/readiness/fleet'));
+    const distributionReady = page.waitForResponse(matching('/api/v1/status-distribution'));
+    const trendReady = page.waitForResponse(matching('/api/v1/readiness/history/series'));
+    if (index === 0) await page.goto('/');
+    else {
+      await page.getByLabel('Command', { exact: true }).selectOption(command);
+      await page.getByRole('button', { name: 'Apply filters' }).click();
+    }
+    const [fleetResponse, distributionResponse, trendResponse] = await Promise.all([fleetReady, distributionReady, trendReady]);
+    expect([fleetResponse.status(), distributionResponse.status(), trendResponse.status()]).toEqual([200, 200, 200]);
+    const fleet = await fleetResponse.json(), distribution = await distributionResponse.json(), series = await trendResponse.json();
+    expect(fleet.command).toBe(command || null); expect(distribution.command).toBe(command || null); expect(series.command).toBe(command || null);
+    expect(distribution.date).toBe(fleet.date); expect(series.end_date).toBe(fleet.date);
+    await expect(page.getByTestId('serviceability')).toHaveText(`${fleet.metrics.svc_pct.toFixed(1)}%`);
+    await expect(page.getByTestId('availability')).toHaveText(`${fleet.metrics.avail_pct.toFixed(1)}%`);
+    for (const [label, key] of [['Total tails', 'total_tails'], ['FMC', 'fmc_tails'], ['PMC', 'pmc_tails'], ['NMCS', 'nmcs_tails'], ['NMCM', 'nmcm_tails'], ['DEPOT', 'depot_tails']]) {
+      await expect(page.getByLabel(`${label} count`, { exact: true }).locator('p')).toHaveText(String(fleet.metrics[key]));
+    }
+    for (const status of distribution.statuses) {
+      await expect(page.getByLabel(`${status.status} status`, { exact: true }).locator('strong')).toHaveText(`${status.count} tails`);
+    }
+    await expect(page.getByTestId('trend-detail')).toContainText(`${series.observations.at(-1).svc_pct.toFixed(1)}%`);
+    const points = (await page.getByTestId('serviceability-line').getAttribute('points'))!.split(' ');
+    expect(points).toHaveLength(series.point_count);
+    points.forEach((point, i) => expect(Number(point.split(',')[1])).toBeCloseTo(20 + (100 - series.observations[i].svc_pct) * 1.8, 6));
+    if (command) {
+      await expect(page.locator('.command-row')).toHaveCount(1);
+      await expect(page.getByRole('heading', { name: `Command ${command} overview`, exact: true })).toBeVisible();
+      const overall = evidence[0] as { svc: number; avail: number };
+      expect(fleet.metrics.svc_pct).not.toBe(overall.svc); expect(fleet.metrics.avail_pct).not.toBe(overall.avail);
+      await expect(page.getByLabel(`Command ${command === 'FICTIONAL_A' ? 'FICTIONAL_B' : 'FICTIONAL_A'} readiness`, { exact: true })).toHaveCount(0);
+    } else await expect(page.locator('.command-row')).toHaveCount(4);
+    evidence.push({ command: command || 'ALL', date: fleet.date, svc: fleet.metrics.svc_pct, avail: fleet.metrics.avail_pct,
+      total: fleet.metrics.total_tails, counts: distribution.statuses.map((row: { status: string; count: number }) => [row.status, row.count]),
+      fleetRequest: fleetResponse.url(), distributionRequest: distributionResponse.url(), historyRequest: trendResponse.url(),
+      historyPoints: series.point_count, historyLast: series.observations.at(-1) });
+    await page.screenshot({ path: info.outputPath(`scope-${index}-${command || 'ALL'}.png`), fullPage: true });
+  }
+  expect((evidence[3] as { svc: number }).svc).toBe((evidence[0] as { svc: number }).svc);
+  await info.attach('command-scope-network-evidence', { body: JSON.stringify({ evidence, requests }, null, 2), contentType: 'application/json' });
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(info.outputPath('scope-evidence.json'), JSON.stringify({ evidence, requests }, null, 2));
 });

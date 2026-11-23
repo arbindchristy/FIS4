@@ -2,6 +2,15 @@
 
 ## Render Free-only focused preflight - 2026-11-23
 
+Current publication status: [PR #14](https://github.com/arbindchristy/FIS4/pull/14)
+is open on `feature/render-free-demo`; chief-architect source review approves the
+deployment implementation. It is **not merged or deployed**. The approved approach
+is Render Free at USD 0/month with Git-backed Docker; no paid compute or external
+registry publication is required or authorized. Public-exposure approval, zero-charge
+billing guards and actual Render build/startup/idle-wake acceptance remain open.
+The verification and no-publication statements below describe their historical
+preflight execution points, not the current PR status.
+
 Customer decision: Render Free USD 0/month only; supersedes the earlier paid-candidate
 recommendation below. Existing image reused; one 0.1 CPU/512 MiB startup, no rebuild.
 Probe exit 0: readiness 557.6507 s; peak 263.42 MiB, warm 212.44 MiB; zero OOM.
@@ -18,7 +27,20 @@ leads dispositioned in report. Eight untracked files: zero extra leads. Whitespa
 protected scope, empty index and five original deployment file hashes PASS.
 
 
-## Synthetic Docker/Render demo preflight gate
+## Future 180-day separate NMCS/NMCM ML release gate
+
+Integrating 180-day separate NMCS and NMCM ML prediction requires a fresh Linux
+dependency, memory, cold-start and functional acceptance assessment before
+customer release. The current synthetic-readiness preflight does not establish
+compatibility or capacity for that future integration and authorizes no ML work.
+
+## Historical synthetic Docker/Render demo preflight gate (superseded)
+
+The paid-compute/Starter, registry-digest and pending-portable-test requirements
+below are retained only as historical decisions. The approved Render Free /
+Git-backed Docker approach supersedes them; portable tests and PR publication are
+complete. Existing measurements remain evidence. Current open gates are listed
+above; CVE and Windows offline acceptance remain separate requirements.
 
 - Existing main-based image/build evidence accepted without repeating the build.
   Fixed synthetic launcher, original business APIs/formulas, compiled local assets,

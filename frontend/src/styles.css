@@ -193,3 +193,11 @@ thead th { background: var(--soft); position: sticky; top: 0; }
 .brand { min-width: 0; }
 .brand-mark { flex-shrink: 0; }
 @media (max-width: 560px) { .brand strong { font-size: .9rem; letter-spacing: 0; } .platform-controls { grid-template-columns: 1fr; } }
+
+/* Command summaries own their platform detail; plots keep native touch scrolling. */
+.command-panel { grid-column: 1 / -1; min-width: 0; }
+.command-platforms { margin-top: 14px; min-width: 0; }
+.command-platforms > summary { cursor: pointer; padding: 12px 0; min-height: 44px; color: var(--ink); font-weight: 600; }
+.command-platforms .platform-panel { margin: 12px 0 0; }
+.command-platforms h4 { margin: 0; }
+.command-counts { flex-wrap: wrap; }

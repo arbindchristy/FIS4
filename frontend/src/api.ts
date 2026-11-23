@@ -8,7 +8,8 @@ type Metadata = { source: Source; date: string; command: string | null };
 export type Fleet = Metadata & { metrics: Metrics };
 export type Commands = Metadata & { commands: (Metrics & { command: string })[] };
 export type Distribution = Metadata & { total_tails: number; statuses: { status: string; count: number; pct: number }[] };
-export type Dashboard = { fleet: Fleet; commands: Commands; distribution: Distribution; availableCommands: string[] };
+type Snapshot = { fleet: Fleet; commands: Commands; distribution: Distribution };
+export type Dashboard = Snapshot & { availableCommands: string[]; overall?: Snapshot };
 export type FailureKind = 'empty' | 'invalid' | 'unavailable' | 'contract' | 'source' | 'unsupported';
 
 export class DashboardError extends Error {
@@ -175,8 +176,48 @@ export async function loadDashboard(filters: Filters, signal: AbortSignal, repor
   if (selectedFleet.metrics.total_tails === 0 || selectedCommands.commands.length === 0) {
     throw new DashboardError('empty', 'The API returned an empty snapshot. Choose another date or command.', 'synthetic');
   }
-  return { fleet: selectedFleet, commands: selectedCommands, distribution: selectedDistribution,
+  const overall = filters.command ? {
+    fleet: fleet(await request(`/api/v1/readiness/fleet?date=${resolved.date}`, signal, reportSource)),
+    distribution: distribution(await request(`/api/v1/status-distribution?date=${resolved.date}`, signal, reportSource)),
+    commands: allCommands,
+  } : { fleet: selectedFleet, distribution: selectedDistribution, commands: allCommands };
+  for (const report of [overall.fleet, overall.distribution, overall.commands]) {
+    if (report.source !== 'synthetic' || report.date !== resolved.date || report.command !== null) contract();
+  }
+  if (!countKeys.every(key => allCommands.commands.reduce((sum, row) => sum + row[key], 0) === overall.fleet.metrics[key])) contract();
+  validateDistribution(overall.fleet, overall.distribution);
+  if (filters.command) {
+    const row = allCommands.commands.find(row => row.command === filters.command);
+    if (!row || selectedCommands.commands.length !== 1 || selectedCommands.commands[0].command !== filters.command
+        || ![...countKeys, 'svc_pct', 'avail_pct'].every(key => row[key as keyof Metrics] === selectedFleet.metrics[key as keyof Metrics]
+          && row[key as keyof Metrics] === selectedCommands.commands[0][key as keyof Metrics])) contract();
+  }
+  validateDistribution(selectedFleet, selectedDistribution);
+  return { fleet: selectedFleet, commands: selectedCommands, distribution: selectedDistribution, overall,
     availableCommands: allCommands.commands.map(row => row.command) };
+}
+
+function validateDistribution(report: Fleet, counts: Distribution) {
+  if (counts.source !== report.source || counts.date !== report.date || counts.command !== report.command
+      || counts.total_tails !== report.metrics.total_tails || counts.statuses.length !== 6) contract();
+  const byCode = Object.fromEntries(counts.statuses.map(row => [row.status, row.count]));
+  if (STATUSES.reduce((sum, code) => sum + byCode[code], 0) !== report.metrics.total_tails
+      || byCode.FMC !== report.metrics.fmc_tails || byCode.PMCM + byCode.PMCS !== report.metrics.pmc_tails
+      || byCode.NMCS !== report.metrics.nmcs_tails || byCode.NMCM !== report.metrics.nmcm_tails
+      || byCode.DEPOT !== report.metrics.depot_tails) contract();
+}
+
+/** Obtain the six-status partition for one API-owned command summary, without deriving percentages. */
+export async function loadCommandSnapshot(snapshot: Dashboard, row: Commands['commands'][number], signal: AbortSignal,
+  reportSource: (source: Source) => void): Promise<Dashboard> {
+  if (snapshot.fleet.source !== 'synthetic' || !validDate(snapshot.fleet.date) || !isCommand(row.command)
+      || !snapshot.commands.commands.includes(row)) contract();
+  const params = new URLSearchParams({ date: snapshot.fleet.date, command: row.command });
+  const counts = distribution(await request(`/api/v1/status-distribution?${params}`, signal, reportSource));
+  const report: Fleet = { source: 'synthetic', date: snapshot.fleet.date, command: row.command, metrics: row };
+  validateDistribution(report, counts);
+  return { fleet: report, distribution: counts, commands: { ...snapshot.commands, command: row.command, commands: [row] },
+    availableCommands: snapshot.availableCommands };
 }
 
 export const WINDOWS = [30, 90, 180, 365] as const;

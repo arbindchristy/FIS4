@@ -27,11 +27,22 @@ export function stubApi() {
     const date = url.searchParams.get('date') || '2026-01-03';
     const command = url.searchParams.get('command');
     if (!['2026-01-01', '2026-01-02', '2026-01-03'].includes(date)) return jsonResponse({ detail: 'No snapshot' }, 404);
+    const rows = date === '2026-01-03' ? [a, b] : [
+      { ...a, fmc_tails: 1, pmc_tails: 2 },
+      { ...b, total_tails: 3, fmc_tails: 0, pmc_tails: 0, nmcs_tails: 1 }
+    ];
+    const selected = command ? rows.find(row => row.command === command)! : null;
     if (url.pathname.endsWith('/commands')) {
-      return jsonResponse({ ...latestCommands, date, command, commands: command ? latestCommands.commands.filter(row => row.command === command) : latestCommands.commands });
+      return jsonResponse({ ...latestCommands, date, command, commands: command ? rows.filter(row => row.command === command) : rows });
     }
-    if (url.pathname.endsWith('/fleet')) return jsonResponse({ ...latestFleet, date, command, metrics: command === 'B' ? b : date === '2026-01-03' ? latestMetrics : firstMetrics });
-    if (url.pathname.endsWith('/status-distribution')) return jsonResponse({ ...latestDistribution, date, command });
+    if (url.pathname.endsWith('/fleet')) return jsonResponse({ ...latestFleet, date, command, metrics: selected ?? (date === '2026-01-03' ? latestMetrics : firstMetrics) });
+    if (url.pathname.endsWith('/status-distribution')) {
+      const m = selected ?? (date === '2026-01-03' ? latestMetrics : firstMetrics);
+      const counts = selected ? [m.fmc_tails, command === 'A' ? m.pmc_tails : 0, command === 'B' ? m.pmc_tails : 0, m.nmcs_tails, m.nmcm_tails, m.depot_tails]
+        : [m.fmc_tails, 1, 1, m.nmcs_tails, m.nmcm_tails, m.depot_tails];
+      return jsonResponse({ ...latestDistribution, date, command, total_tails: m.total_tails,
+        statuses: latestDistribution.statuses.map((row, i) => ({ ...row, count: counts[i], pct: counts[i] / m.total_tails * 100 })) });
+    }
     throw new Error(`Unexpected test URL: ${url.pathname}`);
   });
   vi.stubGlobal('fetch', mock);

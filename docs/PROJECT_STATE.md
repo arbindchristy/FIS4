@@ -1,5 +1,134 @@
 # FIS4 project state
 
+## Command-centric readiness implementation - 2026-11-23
+
+Customer-authorized frontend implementation in the existing `main` working tree;
+starting HEAD `fd6ca4d05736aa2bfb73daab7b40fc02eb5b9232`. No staging/publication.
+The pre-existing untracked `run_fis4_local.py` is excluded from this task and untouched.
+
+### Implemented behavior and existing API reuse
+
+Overall fleet KPI/count/distribution and history remain fleet-wide for the selected
+date, including when a command filter narrows the command list. Each command has
+one primary summary showing API-owned Serviceability/Availability, NMCS, NMCM,
+NMC Total (the count NMCS + NMCM), DEPOT and retained FMC/PMC/tail counts. No
+readiness percentage is calculated or averaged in React.
+
+The standalone fleet-wide platform interface is removed. Each command owns native
+keyboard-operable details/summary. Expansion loads its six-status distribution,
+platform list and comparison for that command/date only; selected platform history
+always includes the owning command, end date and shared 30/90/180/365-day window.
+Several commands can be expanded independently. Unique React IDs prevent control
+label collisions; the shared chart/touch behavior is reused unchanged. Collapsing
+unmounts details and aborts requests. Reopening refetches rather than retaining
+unbounded per-command caches. All names/associations remain fictional; battalion
+and internal hierarchy fields are absent from normal presentation.
+
+Existing endpoints only, with no backend/query/response contract changes:
+
+- `/api/v1/readiness/commands`, `/api/v1/readiness/fleet`, `/api/v1/status-distribution`
+- `/api/v1/platforms?command=...`
+- `/api/v1/readiness/history/platforms?date=...&command=...`
+- `/api/v1/readiness/history/platforms/series?end_date=...&days=...&platform=...&command=...`
+- Existing fleet history-series route remains fleet-scoped in the top overview.
+
+The typed loader retains selected-command data and adds an internal overall
+snapshot from existing unfiltered endpoints, pinned to the same API-resolved date.
+It rejects fleet/command count mismatches, inconsistent selected command metrics
+and six-status population inconsistencies. Expansion reuses API command metrics
+and obtains PMCM/PMCS separately from its distribution before validating platform
+partitions. No percentage reconstruction or new tail/population constants added.
+Existing bounded platform responses, SQL blocking, safe errors and request identity/
+abort guards remain. Default operational rendering never requests cross-command
+platform aggregation. The existing backend still performs distinct-tail counting
+and FIS-001 calculations with unchanged historical reconstruction.
+
+### Executed verification
+
+From `frontend/`, exact npm prefix:
+`npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache`.
+
+| Suffix | Actual result |
+|---|---|
+| `run check` | PASS, exit 0 |
+| `test -- --run src/api.test.ts src/platform.test.tsx src/App.test.tsx src/history.test.tsx` | Initial 120 passed/two failed (lazy-mount test waits); assertions corrected |
+| `test` | PASS, exit 0; 128/128 across five files, 36.99 seconds |
+| `test -- src/command.test.tsx` | Strengthened final command tests: six/six PASS, exit 0, 6.65 seconds |
+| `run build` | Final PASS, exit 0; includes TypeScript, Vite 8.3.8, 20 modules, 488 ms |
+
+Build outputs: HTML 0.62 kB, CSS 16.72 kB (gzip 4.48 kB), JS 255.16 kB
+(gzip 77.97 kB). Outputs/logs/cache/browser artifacts stay ignored. Six new tests
+cover unique/lazy command rows, NMC counts, independent platform values and trends,
+control IDs, fleet/command/status reconciliation failures and collapse cancellation.
+All original 122 cases remain with expectations adapted to nested presentation and
+permanent fleet overview. Fictional CSV fixtures now reconcile across dates and
+command distributions; readiness percentages remain explicit fixture values.
+
+Browser verification: PASS, exit 0; 44 passed/four intentional skips, 48 total,
+2.4 minutes, zero retries. The original 45 cases remain and the new command-owned
+reconciliation case runs across history desktop/tablet/mobile. Skips are only the
+original and platform mobile-touch cases on desktop/tablet. Both mobile touch cases
+pass in light/dark themes, requiring real CDP swipe scroll movement. Tests verify
+every command appears once, same-platform independent rows/trends, fleet-to-command
+six-status sums, every window, keyboard expansion/inspection, no duplicate IDs,
+stale/SQL safety and no page overflow. Desktop-light and mobile-dark platform
+screenshots were visually reviewed. Nine platform/nested-command screenshots remain
+local ignored evidence in `frontend/test-results/` (six theme images and three
+all-command images).
+The initial normal command `run test:e2e` stopped before tests because the user's
+local launcher owns 8000/5173. Those processes were not stopped or reused. An ignored
+local wrapper config moves owned CSV API/Vite to 18000/15173, keeps history API/Vite
+on 8001/5174, all on 127.0.0.1, with server reuse disabled. The first wrapper startup
+failed because its history Vite command inherited the config-folder cwd; the ignored
+wrapper now explicitly supplies frontend cwd. No tests ran in either startup failure.
+Exact browser suffix: `run test:e2e -- --config=../.harness-test-tmp/command-centric/playwright-isolated.config.mts`.
+Logs/configs: `.harness-test-tmp/command-centric/` (local ignored evidence).
+
+### Git and security verification
+
+`git diff --check` passes (exit 0). Protected-path comparison to HEAD passes;
+the Git index remains empty. Existing history bytes in governance documents are
+preserved; an intermediate Windows text-encoding issue in the new documentation
+write was corrected before final checks. No existing historical evidence changed.
+The React review checklist was applied to effect cleanup, derived view identity,
+per-instance IDs, lazy mounting and reused accessible chart controls.
+
+`& .\scripts\security_check.ps1`: exit 0, 68 tracked/index files, zero confirmed
+violations and 10 existing manual leads (five expressions, each in index and working
+tree). Dispositions: api/config.py:30 is a SecretStr field declaration;
+api/providers.py:86 binds runtime connection settings; api/providers.py:89 binds an
+injected secret; frontend/e2e/dashboard.spec.ts:14 is a loopback hostname equality;
+the historical PROJECT_STATE server-reuse setting matches a scanner suffix. None
+contains an embedded credential, real database address or operational record. All
+five causes are benign, all ten leads dispositioned; the scanner reports REVIEW
+REQUIRED by design. Its rules are unchanged. The new command test is explicitly
+reviewed/scanned with the same Inspect-Text rules because it is untracked; zero
+additional leads. The user's unrelated untracked launcher is excluded, not proposed
+for publication and not modified. Future publication still requires staged checks.
+
+### Scope and acceptance limits
+
+Task inventory (16 files):
+
+- frontend/src/App.tsx, frontend/src/ReadinessPanels.tsx,
+  frontend/src/PlatformIntelligence.tsx, frontend/src/api.ts, frontend/src/styles.css
+- frontend/src/App.test.tsx, frontend/src/history.test.tsx,
+  frontend/src/platform.test.tsx, frontend/src/command.test.tsx (new),
+  frontend/src/test/fixtures.ts
+- frontend/e2e/dashboard.spec.ts, frontend/e2e/history.spec.ts,
+  frontend/e2e/platform.spec.ts
+- docs/PROJECT_STATE.md, docs/TASKS.md, docs/RELEASE_GATES.md
+
+Backend/provider/SQL views/simulator/readiness engine/protected tests, dependencies,
+FIS-001/FIS-002/FIS-003 and approved architecture contracts remain unchanged.
+No backend/portable/harness suites repeated: this task changes frontend only.
+Physical devices/iOS/WebKit, full accessibility audit, real SQL, authentication,
+prediction compatibility and offline release acceptance remain unverified. Refresh
+and atomicity across separate live-production requests remain deferred backend
+integration concerns; current immutable synthetic snapshots reconcile explicitly.
+No API deficiency blocks this UI. No real data, database/model access, dependencies,
+external services, staging, commits or deployment. Await chief-architect source review.
+
 ## Phase 03C-1B.2 frontend verification - 2026-11-22
 
 Branch `feature/phase03c1b-react-platform`, unchanged HEAD

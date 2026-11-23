@@ -1,5 +1,64 @@
 # FIS4 project state
 
+## Render Free-only focused preflight - 2026-11-23
+
+Current publication status: [PR #14](https://github.com/arbindchristy/FIS4/pull/14)
+is open on `feature/render-free-demo`; chief-architect source review approves the
+deployment implementation. It is **not merged or deployed**. The approved approach
+is Render Free at USD 0/month with Git-backed Docker; no paid compute or external
+registry publication is required or authorized. Public-exposure approval, zero-charge
+billing guards and actual Render build/startup/idle-wake acceptance remain open.
+The verification and no-publication statements below describe their historical
+preflight execution points, not the current PR status.
+
+Customer decision: Render Free USD 0/month only; supersedes the earlier paid-candidate
+recommendation below. Existing image reused; one 0.1 CPU/512 MiB startup, no rebuild.
+Probe exit 0: readiness 557.6507 s; peak 263.42 MiB, warm 212.44 MiB; zero OOM.
+20 sequential API, four concurrent requests and five subsequent health checks pass.
+Focused portable deployment-test TypeScript exit 0; two browser cases pass in 6.3 s.
+Original Docker/runtime/lock/POC spec unchanged; no application or dependency changes.
+CONDITIONAL GO for pre-warmed fictional demo only. Actual Render build/idle wake,
+unauthenticated public exposure approval and USD 0 billing guards remain open.
+Git-backed Docker needs no external registry; exact ten-file PR allowlist, commands,
+limits, security dispositions, smoke/rollback steps: deploy/demo/PREFLIGHT_REPORT.md.
+No stage/commit/push/PR/deployment/account or billing operation performed.
+Final security exit 0: 71 tracked/index files, zero violations; ten existing benign
+leads dispositioned in report. Eight untracked files: zero extra leads. Whitespace,
+protected scope, empty index and five original deployment file hashes PASS.
+
+
+## Historical Docker/Render preflight evidence - 2026-11-23
+
+Detached deployment worktree at merged main 8ad8f9173429672b04957d3ee381851422dc5eae;
+remote main verified unchanged. Existing runtime/context files and running localhost
+container preserved; no rebuild/install/source changes. Report:
+[deploy/demo/PREFLIGHT_REPORT.md](../deploy/demo/PREFLIGHT_REPORT.md).
+
+Prior build/native/pip-check and browser evidence recovered. Local normal readiness
+33.43 s; constrained 0.5 CPU/512 MiB readiness 94.12 s, peak 276.64 MiB, warm 217.77
+MiB; clean stop exit 0. Nine missing constrained browser checks pass in 24.5 s,
+with old output preserved. Served assets and all application-source hashes match
+the retained image. No SQL, models, operational data or secrets in reviewed app
+artifact. HTTP source paths/default docs routes remain blocked.
+
+Security exit 0: 71 tracked/index files, zero confirmed violations, 10 existing
+benign leads dispositioned in the report; six untracked POC/report files explicitly
+reviewed/scanned with zero additional leads. Git whitespace/protected-file checks
+pass; five original POC file hashes preserved. No broad suites repeated.
+
+**Superseded recommendation (retained as historical evidence):** The following
+Starter/cost and test-portability requirements are no longer current. Render Free
+and Git-backed Docker supersede the paid candidate; portable tests and PR
+publication are complete. CVE, actual Render and Windows offline acceptance remain
+open. Original measurements and security evidence above are unchanged.
+
+Recommendation CONDITIONAL GO only: approve access protection and Starter-class
+compute cost before hosting; no authentication claim. Current Render account/service
+configuration has not been accessed. No registry push/public deployment. POC test
+portability, CVE/supply-chain review, actual Render smoke tests and Windows offline
+acceptance remain open. No formula, React, simulator, provider, ML or canonical
+Windows dependency changes. No staging, commits, branch changes or publication.
+
 ## P0 command-filter correction and acceptance audit - 2026-11-23
 
 Starting branch `main`, HEAD `79c3360ae8ea4e170fa1452dbc54383de02304aa`.

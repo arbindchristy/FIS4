@@ -75,7 +75,7 @@ describe('historical dashboard', () => {
     fireEvent.change(screen.getByLabelText('Snapshot date'), { target: { value: '2026-10-01' } });
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
     await screen.findByTestId('serviceability-line');
-    expect(fetch.mock.calls.map(call => String(call[0]))).toContain('/api/v1/readiness/history/series?end_date=2026-10-01&days=365');
+    expect(fetch.mock.calls.map(call => String(call[0]))).toContain('/api/v1/readiness/history/series?end_date=2026-10-01&days=365&command=FICTIONAL_B');
     expect(screen.getByTestId('trend-detail')).toHaveTextContent('01 Oct 2026');
   });
   it('keeps CSV snapshots usable when history is unsupported', async () => {

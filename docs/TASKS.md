@@ -2,6 +2,7 @@
 
 | Item | Status | Evidence or next action |
 |---|---|---|
+| P0 command-filter correction | Corrected; acceptance passed; chief-architect source review pending | Selected snapshot authoritative; old behavior fails three new cases; 136 regression, eight final scope, 47 browser passes/four skips plus three final demos; TypeScript/build/security pass; evidence/matrix in PROJECT_STATE |
 | Command-centric readiness | Implemented; local verification passed; chief-architect review pending | One summary/command with nested platforms; 128 unit tests, six final command tests, TypeScript/build pass; browser 44 pass/four intentional skips; security zero violations/10 benign leads; no publication |
 | Phase 03C-1B.2 frontend verification | Local gates passed; chief-architect review pending | 122/122 unit tests; TypeScript/build exit 0; full browser 41 passed/four intentional skips; strengthened follow-up six passed; actual mobile touch in both themes; security dispositions in PROJECT_STATE; no publication |
 | Phase 03C-1B.1 React platform intelligence | Implementation written; source review pending | Separate platform section and validated clients, shared charts/windows, product identity; focused TypeScript exit 0; no suites/build run; Phase 03C-1B.2 must add/adapt tests and verify runtime behavior |

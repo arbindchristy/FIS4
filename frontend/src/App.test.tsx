@@ -32,7 +32,9 @@ describe('readiness dashboard', () => {
     await screen.findByTestId('serviceability');
     await user.selectOptions(screen.getByLabelText('Command'), 'B');
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
-    await waitFor(() => expect(screen.getByTestId('serviceability')).toHaveTextContent('83.3%'));
+    await waitFor(() => expect(screen.getByTestId('serviceability')).toHaveTextContent('66.7%'));
+    expect(screen.getByTestId('availability')).toHaveTextContent('50.0%');
+    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('4');
     expect(screen.queryByLabelText('Command A readiness')).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Command A' })).toBeInTheDocument();
     expect(fetch.mock.calls.map(call => String(call[0]))).toContain('/api/v1/readiness/commands?date=2026-01-03&command=B');

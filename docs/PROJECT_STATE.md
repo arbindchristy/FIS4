@@ -1,5 +1,162 @@
 # FIS4 project state
 
+## P0 command-filter correction and acceptance audit - 2026-11-23
+
+Starting branch `main`, HEAD `79c3360ae8ea4e170fa1452dbc54383de02304aa`.
+This customer instruction supersedes the previous task's fleet-always presentation
+and test oracles. The earlier entry remains historical evidence, not current
+reporting behavior. Pre-existing untracked review patch and local launcher remain
+excluded and untouched. No staging, publication, dependencies or backend changes.
+
+### Root cause and correction
+
+The prior implementation incorrectly interpreted retaining the overall fleet
+summary as keeping it authoritative after command selection. App constructed an
+overall snapshot for history and ReadinessPanels used `data.overall ?? data` for
+KPIs, counts and status distribution. The API had already returned the correct
+selected-command snapshot; React chose the wrong object. Static FLEET labels and
+Fleet overview heading compounded the misleading scope. These related presentation
+defects are now corrected; no backend calculation defect was found.
+
+App now passes `view.data` directly to both panels and HistoricalTrends. Panels
+use the selected fleet/report object and distribution directly. KPI labels and
+heading identify the selected command, and the scope indicator remains truthful
+on loading/error states. All Commands selects the consolidated fleet snapshot.
+The internal Dashboard type no longer exposes an overall property, preventing
+that display escape path. The loader retains private unfiltered responses only
+for fleet-to-command count validation, not as UI fallback or percentage oracles.
+
+Nested command/platform details, six-status partitions, NMC count, date/windows,
+request cancellation and stale/source guards remain unchanged. Serviceability and
+availability are API-owned values, neither computed nor averaged in React.
+FIS-001/FIS-002/FIS-003, readiness/history engine, simulator and backend contracts
+are unchanged. No Python/backend/portable/harness suites were repeated for this
+frontend-only correction.
+
+### Why the previous tests accepted the defect
+
+- App.test command-filter assertion was explicitly changed to expect fleet 83.3%
+  after selecting B instead of B's 66.7%. It asserted incorrect product behavior.
+- history.test expected an unfiltered history URL after command selection.
+- platform component/browser cases expected 160 tails and compared the main cards
+  with an unfiltered fleet response after selecting a command. These were wrong
+  acceptance oracles even where they used real HTTP responses.
+- Shared history fixtures assigned identical 82.75/71.25 percentages to fleet and
+  every command, and equal command populations, masking wrong-scope consumption.
+- API unit tests proved correct request parameters but did not prove that React
+  consumed the selected response. Counts of passing tests did not establish parity.
+
+All incorrect assertions identified above are replaced with selected-command
+expectations. Dedicated acceptance fixtures deliberately separate fleet, A and B
+percentages and all six status populations. Those values are explicit API-shaped
+test values, not a second readiness calculator. Existing equal-value fixtures are
+retained for narrow mechanics tests; they are no longer the scope acceptance oracle.
+No unrelated reporting defect was confirmed by this audit. It does not claim an
+exhaustive proof of all possible reporting combinations.
+
+### Requirement-to-test matrix
+
+| Requirement | Specific evidence | Mechanism and limit |
+|---|---|---|
+| Fleet reporting | scope.test: selected A, selected B and All Commands; history.spec: acceptance demonstration | Component fetch mock plus actual synthetic HTTP/browser; verifies fleet KPIs/counts/statuses/history before and after filters |
+| Command reporting | scope.test: selected A/B; App.test: applies a command filter; history.spec: acceptance demonstration | Distinct fictional API mock plus real HTTP responses/UI; positive and negative KPI/population/scope assertions; other command absent |
+| Nested platform reporting | command.test: renders each command once; platform.spec: each command appears once and independently owns reconciled platform counts and trends; scope.test: selected A/B | Component mock and real HTTP/browser; owning-command platform requests, independent selections, unique IDs and all partition sums |
+| Reporting date | scope.test: date and all windows retain command B; history.spec: all windows and command/date filters stay aligned | Mock request parameters plus browser/actual selected-command backend response; dates pinned to API snapshot |
+| History/windows | scope.test: date/all windows; switching A to B; unavailable command B history; history.spec: actual HTTP scope demonstration | Component mock with delayed/rejected responses plus actual browser series/point geometry; selected command on every 30/90/180/365 request, no stale/fleet chart |
+| Reset/navigation | scope.test: date/all windows/reset; App.test: date selection/reset; dashboard.spec: live filter reset and keyboard navigation | Mock and real HTTP/browser; All Commands preserves selected date; Latest snapshot resets date and command. Browser Back/URL routing is not implemented or claimed |
+| Reconciliation/source isolation | command.test: inconsistent populations and collapsed late SQL; platform.test contract/source/cancellation cases; api.test SQL health; browser history/platform error/source cases | Mock fetch and browser HTTP fault injection, plus real synthetic partition reconciliation; actual SQL and authentication remain untested |
+
+### Execution evidence
+
+All npm commands run from `frontend/` with installed dependencies only and prefix:
+`npm.cmd --offline --cache=C:\AI\Projects\FIS4\.harness-test-tmp\npm-cache`.
+
+| Suffix | Actual result |
+|---|---|
+| `test -- src/scope.test.tsx` before runtime correction | Exit 1: three failed/four passed. Expected A 78.1%, received fleet 83.1%; command A history request absent. Proves the new tests detect old behavior |
+| `run check` | Initial new-test option typing error corrected; subsequent PASS, exit 0 |
+| `test -- src/scope.test.tsx src/App.test.tsx src/history.test.tsx src/platform.test.tsx` | PASS, exit 0; 110/110, four files, 36.50 seconds |
+| `test` | Intermediate PASS, 135/135; final strengthened regression: PASS, exit 0; 136/136 in six files, 48.57 seconds |
+| `run build` | PASS, exit 0; tsc --noEmit, Vite 8.3.8, 20 modules, 286 ms |
+| `run test:e2e -- --config=../.harness-test-tmp/command-centric/playwright-isolated.config.mts` | PASS, exit 0; 47 passed/four intentional skips, 51 total, zero retries, 2.2 minutes |
+
+The final screenshot review additionally found the availability description still
+saying total fleet for a selected command. That scope-label defect is corrected
+and explicitly asserted. After this text-only source change, eight/eight acceptance
+tests passed (exit 0, 13.71 seconds), production TypeScript/build passed (exit 0,
+20 modules, 308 ms), and the affected three browser demos passed (exit 0, three/three, no retries/skips,
+1.2 minutes). Exact additional suffixes: `test -- src/scope.test.tsx` and
+`run test:e2e -- --config=../.harness-test-tmp/command-centric/playwright-isolated.config.mts --project=history-desktop --project=history-tablet --project=history-mobile --grep "acceptance demonstration"`.
+Final screenshots were regenerated; the final desktop B image was visually inspected.
+The complete 136/47 results above precede only this descriptor change. The four
+browser skips are the original/platform touch cases on non-mobile projects; both
+actual mobile touch cases passed. Both themes/keyboard and nested-platform cases
+remain in the full browser suite.
+
+The established ignored wrapper owns CSV API/Vite 18000/15173 and history API/Vite
+8001/5174, all loopback with server reuse disabled. It does not stop or reuse the
+user's local launcher. No external services or downloads. Logs are under ignored
+`.harness-test-tmp/command-scope/`. Build: HTML 0.62 kB, CSS 16.72 kB (gzip 4.48 kB),
+Final JS 255.25 kB (gzip 77.95 kB). No runtime source changed after the final build.
+
+### Actual browser before/after scope demonstration
+
+On 2026-11-20 fictional synthetic history, the actual UI network fleet/distribution/
+history responses were inspected for All -> A -> B -> All. UI values, every count
+card, all six status rows and every plotted serviceability point match responses.
+API serviceability/availability values were compared directly, never recalculated.
+
+| Transition | Displayed serviceability | Displayed availability | Tails | FMC/PMCM/PMCS/NMCS/NMCM/DEPOT |
+|---|---|---|---|---|
+| Initial All | 94.6% | 88.1% | 160 | 135 / 2 / 4 / 7 / 8 / 4 |
+| Select A | 92.3% | 90.0% | 40 | 35 / 0 / 1 / 1 / 3 / 0 |
+| Select B | 94.4% | 85.0% | 40 | 34 / 0 / 0 / 4 / 2 / 0 |
+| Restore All | 94.6% | 88.1% | 160 | 135 / 2 / 4 / 7 / 8 / 4 |
+
+Recorded history requests use end_date=2026-11-20 and days=30, with command absent
+for All and respectively command=FICTIONAL_A / command=FICTIONAL_B. Each returned
+30 points for its scope. This is an observed fixed-browser sequence, not a claim
+that a pre-fix browser demo was run; the pre-fix failure evidence is the unit run.
+Raw responses/request URLs and screenshots remain local ignored evidence:
+`frontend/test-results/history-acceptance-demonst-418f0-k-follows-actual-HTTP-scope-history-{desktop,tablet,mobile}/scope-evidence.json`
+and `scope-{0-ALL,1-FICTIONAL_A,2-FICTIONAL_B,3-ALL}.png` in those same folders.
+
+### Final file inventory and security review
+
+Fourteen task files, all unstaged:
+
+- docs/PROJECT_STATE.md, docs/TASKS.md, docs/RELEASE_GATES.md
+- frontend/src/App.tsx, frontend/src/ReadinessPanels.tsx, frontend/src/api.ts
+- frontend/src/App.test.tsx, frontend/src/history.test.tsx, frontend/src/platform.test.tsx
+- frontend/src/scope.test.tsx (new), frontend/src/test/scopeFixtures.ts (new)
+- frontend/e2e/dashboard.spec.ts, frontend/e2e/history.spec.ts, frontend/e2e/platform.spec.ts
+
+`git diff --check` and protected-path comparisons pass (exit 0); index empty.
+`& .\scripts\security_check.ps1`: exit 0; 69 tracked/index files, zero confirmed
+violations, 10 existing manual leads (five expressions in index and working tree).
+Dispositions: api/config.py:30 is a SecretStr declaration; api/providers.py:86 is
+runtime settings binding; api/providers.py:89 is injected secret binding;
+frontend/e2e/dashboard.spec.ts:14 is loopback hostname comparison; historical
+PROJECT_STATE server-reuse text matches a scanner suffix. No embedded credential
+or operational endpoint; all leads are benign and dispositioned. REVIEW REQUIRED
+is the scanner's unchanged label, not an unresolved security violation.
+The two new acceptance files were explicitly reviewed as regular text and scanned
+with the scanner's Inspect-Text function extracted through PowerShell AST: zero
+additional leads. Existing unrelated patch/launcher are excluded, untouched and
+not proposed for publication. Staged security checks are deferred because staging
+is prohibited. No security rules were modified.
+
+### Review boundaries
+
+Task changes are limited to frontend source/tests and these project records.
+HistoricalTrends was inspected and retained unchanged; passing the selected snapshot
+restores its existing command-aware request/validation path. No client formula,
+SQL/provider, simulator, prediction, dependency or security-policy changes.
+Physical devices/iOS/WebKit, full accessibility audit, browser Back/URL state,
+actual SQL, operational cross-request consistency, authentication and offline
+release acceptance remain unverified/deferred. Only fictional data were used.
+No stage, commit, push, PR, merge or deployment. Stop for chief-architect review.
+
 ## Command-centric readiness implementation - 2026-11-23
 
 Customer-authorized frontend implementation in the existing `main` working tree;

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { DashboardError, loadPlatforms, loadPlatformSeries, STATUSES, WINDOWS,
-  type Dashboard, type FailureKind, type HistoryWindow, type PlatformData, type PlatformRow, type PlatformSeries } from './api';
+import { useEffect, useId, useState } from 'react';
+import { DashboardError, loadCommandSnapshot, loadPlatforms, loadPlatformSeries, STATUSES, WINDOWS,
+  type Commands, type Dashboard, type FailureKind, type HistoryWindow, type PlatformData, type PlatformRow, type PlatformSeries } from './api';
 import { dateLabel, TrendChart } from './HistoricalTrends';
 
 type Props = { snapshot: Dashboard; days: HistoryWindow; setDays: (days: HistoryWindow) => void; blockSql: () => void };
@@ -23,7 +23,25 @@ function PlatformError({ error, retry, history = false }: { error: DashboardErro
   </div>;
 }
 
+export function CommandPlatforms({ snapshot, row, ...props }: Props & { row: Commands['commands'][number] }) {
+  const [retry, setRetry] = useState(0);
+  const [state, setState] = useState<{ snapshot: Dashboard; row: typeof row; data?: Dashboard; error?: DashboardError }>();
+  useEffect(() => {
+    const controller = new AbortController();
+    setState(undefined);
+    loadCommandSnapshot(snapshot, row, controller.signal, source => {
+      if (!controller.signal.aborted && source === 'sql') props.blockSql();
+    }).then(data => { if (!controller.signal.aborted) setState({ snapshot, row, data }); })
+      .catch(error => { if (!controller.signal.aborted) setState({ snapshot, row, error: failure(error) }); });
+    return () => controller.abort();
+  }, [snapshot, row, retry, props.blockSql]);
+  if (state?.snapshot !== snapshot || state.row !== row) return <p role="status">Loading command platform data...</p>;
+  if (state.error) return <PlatformError error={state.error} retry={() => setRetry(value => value + 1)} />;
+  return state.data ? <PlatformIntelligence snapshot={state.data} {...props} /> : null;
+}
+
 export function PlatformIntelligence({ snapshot, days, setDays, blockSql }: Props) {
+  const headingId = useId();
   const [retry, setRetry] = useState(0);
   const [preferred, setPreferred] = useState('');
   const [state, setState] = useState<State>({ snapshot, retry, status: 'loading' });
@@ -40,8 +58,8 @@ export function PlatformIntelligence({ snapshot, days, setDays, blockSql }: Prop
     return () => controller.abort();
   }, [snapshot, retry, blockSql]);
   const current = state.snapshot === snapshot && state.retry === retry ? state : { status: 'loading' as const };
-  return <section className="panel platform-panel" aria-labelledby="platform-heading" data-testid="platform-intelligence">
-    <div className="panel-heading"><div><p className="eyebrow">AIRCRAFT PLATFORM ANALYSIS</p><h2 id="platform-heading">Platform Intelligence</h2></div></div>
+  return <section className="platform-panel" aria-labelledby={headingId} data-testid="platform-intelligence">
+    <div className="panel-heading"><div><p className="eyebrow">AIRCRAFT PLATFORM ANALYSIS</p><h4 id={headingId}>Platform breakdown</h4></div></div>
     <p className="platform-context">{dateLabel(snapshot.fleet.date)} · {snapshot.fleet.command ? `Command ${snapshot.fleet.command}` : 'All commands'}</p>
     <p className="platform-note">Platform selection affects only this section. Fleet and command overview values remain unchanged.</p>
     {current.status === 'loading' ? <p role="status">Loading platform comparisons…</p> : null}
@@ -55,6 +73,7 @@ export function PlatformIntelligence({ snapshot, days, setDays, blockSql }: Prop
 function PlatformView({ snapshot, days, setDays, blockSql, data, platform, setPlatform }: Props & {
   data: PlatformData; platform: string; setPlatform: (platform: string) => void;
 }) {
+  const controlsId = useId();
   const selected = data.rows.find(row => row.platform === platform)!;
   return <>
     <div className="table-scroll platform-comparisons" role="region" aria-label="Platform comparison table" tabIndex={0}>
@@ -67,11 +86,11 @@ function PlatformView({ snapshot, days, setDays, blockSql, data, platform, setPl
         </tr>)}</tbody>
       </table>
     </div>
-    <div className="platform-controls"><div className="field"><label htmlFor="platform-select">Platform</label>
-      <select id="platform-select" value={platform} onChange={event => setPlatform(event.target.value)}>
+    <div className="platform-controls"><div className="field"><label htmlFor={`${controlsId}-platform`}>Platform</label>
+      <select id={`${controlsId}-platform`} value={platform} onChange={event => setPlatform(event.target.value)}>
         {data.options.map(label => <option key={label} value={label}>{label}</option>)}
-      </select></div><div className="field"><label htmlFor="platform-window">Platform historical window</label>
-      <select id="platform-window" value={days} onChange={event => setDays(Number(event.target.value) as HistoryWindow)}>
+      </select></div><div className="field"><label htmlFor={`${controlsId}-window`}>Platform historical window</label>
+      <select id={`${controlsId}-window`} value={days} onChange={event => setDays(Number(event.target.value) as HistoryWindow)}>
         {WINDOWS.map(value => <option key={value} value={value}>{value} days</option>)}
       </select></div></div>
     <h3>Platform history: {platform}</h3>

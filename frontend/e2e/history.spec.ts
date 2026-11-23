@@ -72,11 +72,11 @@ test('all windows and command/date filters stay aligned with actual backend snap
   await page.getByLabel('Command', { exact: true }).selectOption('FICTIONAL_C');
   await page.getByLabel('Snapshot date').fill('2024-11-20');
   await page.getByRole('button', { name: 'Apply filters' }).click();
-  const body = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20&command=FICTIONAL_C')).json();
+  const body = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20')).json();
   await expect(page.getByTestId('serviceability')).toHaveText(`${body.metrics.svc_pct.toFixed(1)}%`);
   await expect(page.getByTestId('trend-detail')).toContainText('20 Nov 2024');
   await expect(page.getByText('View daily readiness data (365 days)')).toBeVisible();
-  await expect(page.getByLabel('Total tails count')).toContainText('40');
+  await expect(page.getByLabel('Total tails count')).toContainText('160');
   await page.getByRole('button', { name: 'Latest snapshot' }).click();
   await expect(page.getByLabel('Total tails count')).toContainText('160');
   await expect(page.getByTestId('trend-detail')).toContainText('20 Nov 2026');

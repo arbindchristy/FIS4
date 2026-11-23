@@ -1,5 +1,24 @@
 # FIS4 release gates
 
+## Command-centric readiness review gate
+
+- Exactly one primary summary per command; command-owned expandable platforms,
+  no competing flat platform interface, no battalion exposure.
+- Overall fleet overview remains above filtered commands. API-owned percentages;
+  count reconciliation at fleet/command/platform levels; NMC count is NMCS + NMCM.
+- Existing contracts and history engine preserved; lazy loading, cancellation,
+  stale-response protection, source isolation, keyboard/touch/themes retained.
+- TypeScript/build pass; 128 frontend tests pass; strengthened six command tests
+  pass. Browser: 44 pass/four intentional skips, zero retries; both touch tests pass.
+- Security: exit 0, zero confirmed violations, 10 existing leads dispositioned;
+  new untracked command test explicitly scanned with no additional leads.
+  Exact commands, startup failures and final evidence are in PROJECT_STATE.
+- Backend, simulator, provider, formulas, decisions and dependencies unchanged;
+  backend/portable/harness suites intentionally not repeated for frontend-only work.
+- Physical device/iOS/WebKit, full accessibility, actual SQL, authentication,
+  prediction and offline-release acceptance remain deferred. Chief-architect source
+  review required; nothing staged, committed, published or deployed.
+
 ## Phase 03C-1B.2 frontend verification review gate
 
 - TypeScript, 122/122 unit tests and production build pass, exit 0.

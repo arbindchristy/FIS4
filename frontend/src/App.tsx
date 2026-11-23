@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { DashboardError, loadDashboard, type Dashboard, type Filters, type Source } from './api';
 import { ReadinessPanels } from './ReadinessPanels';
 import { HistoricalTrends } from './HistoricalTrends';
-import { PlatformIntelligence } from './PlatformIntelligence';
 import type { HistoryWindow } from './api';
 
 type View = { status: 'loading' } | { status: 'ready'; data: Dashboard } | { status: 'error'; error: DashboardError };
@@ -47,6 +46,7 @@ export default function App() {
     return () => controller.abort();
   }, [filters.date, filters.command, reload]);
 
+  const overall = useMemo(() => view.status === 'ready' ? { ...view.data, ...(view.data.overall ?? view.data) } : null, [view]);
   const busy = view.status === 'loading';
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,12 +79,12 @@ export default function App() {
         <div className="field"><label htmlFor="command">Command</label><select id="command" value={draftCommand} onChange={event => setDraftCommand(event.target.value)} disabled={busy}><option value="">All commands</option>{availableCommands.map(command => <option key={command} value={command}>Command {command}</option>)}</select><span>Available commands come from the API.</span></div>
         <div className="filter-actions"><button type="submit" disabled={busy}>Apply filters</button><button type="button" className="secondary" onClick={reset} disabled={busy}>Latest snapshot</button></div>
       </form>
-      <div className="section-caption"><h2>{view.status === 'ready' && view.data.fleet.command ? `Command ${view.data.fleet.command} overview` : 'Fleet overview'}</h2><span>{view.status === 'ready' ? 'API snapshot · display precision 1 decimal' : 'API-supplied readiness metrics'}</span></div>
+      <div className="section-caption"><h2>Fleet overview</h2><span>{view.status === 'ready' ? 'API snapshot · display precision 1 decimal' : 'API-supplied readiness metrics'}</span></div>
       <div className="theme-controls"><button type="button" className="secondary" aria-pressed={theme === 'dark'} onClick={() => setTheme(value => value === 'light' ? 'dark' : 'light')}>Use {theme === 'light' ? 'dark' : 'light'} theme</button></div>
       <div aria-busy={busy}>
         {view.status === 'loading' ? <section className="state-panel" role="status"><span className="spinner" aria-hidden="true" /><h2>Loading readiness…</h2><p>Checking the configured data source and retrieving one consistent snapshot.</p></section> : null}
         {view.status === 'error' ? <section className={`state-panel error-state ${view.error.kind}`} role="alert"><span className="state-symbol" aria-hidden="true">!</span><h2>{view.error.kind === 'empty' ? 'No data for this selection' : view.error.kind === 'invalid' ? 'Check the filters' : view.error.kind === 'source' ? 'Synthetic mode required' : 'Readiness data unavailable'}</h2><p>{view.error.message}</p><button type="button" onClick={() => setReload(value => value + 1)}>Try again</button></section> : null}
-        {view.status === 'ready' ? <ReadinessPanels data={view.data}><HistoricalTrends snapshot={view.data} days={days} setDays={setDays} blockSql={blockSql} /><PlatformIntelligence snapshot={view.data} days={days} setDays={setDays} blockSql={blockSql} /></ReadinessPanels> : null}
+        {view.status === 'ready' ? <ReadinessPanels data={view.data} days={days} setDays={setDays} blockSql={blockSql}><HistoricalTrends snapshot={overall!} days={days} setDays={setDays} blockSql={blockSql} /></ReadinessPanels> : null}
       </div>
       <footer><span>Fleet Intelligence Suite <span aria-hidden="true">/</span> Fleet Intelligence Dashboard</span><span>Historical demonstration · Local demonstration</span></footer>
     </main>

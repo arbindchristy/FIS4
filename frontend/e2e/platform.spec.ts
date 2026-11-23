@@ -28,11 +28,13 @@ async function contrast(target: Locator) {
 }
 
 test('actual platform comparisons reconcile, selection preserves fleet and themes/keyboard stay usable', async ({ page }, info) => {
-  const rows = await (await page.request.get(`${path}?date=${end}`)).json();
-  const options = await (await page.request.get('/api/v1/platforms')).json();
+  const rows = await (await page.request.get(`${path}?date=${end}&command=FICTIONAL_A`)).json();
+  const options = await (await page.request.get('/api/v1/platforms?command=FICTIONAL_A')).json();
   const fleet = await (await page.request.get(`/api/v1/readiness/fleet?date=${end}`)).json();
-  expect(rows.platforms.reduce((sum: number, row: { total_tails: number }) => sum + row.total_tails, 0)).toBe(fleet.metrics.total_tails);
+  const command = await (await page.request.get(`/api/v1/readiness/fleet?date=${end}&command=FICTIONAL_A`)).json();
+  expect(rows.platforms.reduce((sum: number, row: { total_tails: number }) => sum + row.total_tails, 0)).toBe(command.metrics.total_tails);
   await page.goto('/');
+  await page.getByText('Platform breakdown for Command FICTIONAL_A', { exact: true }).click();
   const section = page.getByTestId('platform-intelligence');
   await expect(section.getByTestId('platform-serviceability-line')).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Fleet Intelligence Dashboard');
@@ -44,19 +46,19 @@ test('actual platform comparisons reconcile, selection preserves fleet and theme
     await expect(cells.nth(8)).toHaveText(`${row.svc_pct.toFixed(1)}%`);
     await expect(cells.nth(9)).toHaveText(`${row.avail_pct.toFixed(1)}%`);
   }
-  const commandCards = await page.locator('.command-list').textContent();
+  const commandCards = await page.locator('.command-summary').allTextContents();
   const selected = options.platforms[1];
   await section.getByLabel('Platform', { exact: true }).selectOption(selected);
-  const series = await (await page.request.get(`${path}/series?end_date=${end}&days=30&platform=${selected}`)).json();
+  const series = await (await page.request.get(`${path}/series?end_date=${end}&days=30&platform=${selected}&command=FICTIONAL_A`)).json();
   await expect(section.getByTestId('platform-trend-detail')).toContainText(`${series.observations.at(-1).svc_pct.toFixed(1)}%`);
   await expect(page.getByTestId('serviceability')).toHaveText(`${fleet.metrics.svc_pct.toFixed(1)}%`);
   await expect(page.getByTestId('availability')).toHaveText(`${fleet.metrics.avail_pct.toFixed(1)}%`);
-  await expect.poll(() => page.locator('.command-list').textContent()).toBe(commandCards);
+  await expect.poll(() => page.locator('.command-summary').allTextContents()).toEqual(commandCards);
   for (const theme of ['light', 'dark']) {
     if (theme === 'dark') await page.getByRole('button', { name: 'Use dark theme' }).click();
     await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    for (const target of [section.getByRole('heading', { name: 'Platform Intelligence', exact: true }), section.getByLabel('Platform', { exact: true }), section.getByTestId('platform-trend-detail')]) {
+    for (const target of [section.getByRole('heading', { name: 'Platform breakdown', exact: true }), section.getByLabel('Platform', { exact: true }), section.getByTestId('platform-trend-detail')]) {
       expect(await contrast(target)).toBeGreaterThanOrEqual(4.5);
     }
     await page.screenshot({ path: info.outputPath(`platform-${theme}.png`), fullPage: true });
@@ -77,14 +79,16 @@ test('actual platform comparisons reconcile, selection preserves fleet and theme
 
 test('command/date/platform and every history window align with backend while overview remains authoritative', async ({ page }) => {
   await page.goto('/');
+  await page.getByText('Platform breakdown for Command FICTIONAL_A', { exact: true }).click();
   const section = page.getByTestId('platform-intelligence');
   await expect(section.getByTestId('platform-serviceability-line')).toBeVisible();
   await page.getByLabel('Command', { exact: true }).selectOption('FICTIONAL_B');
   await page.getByLabel('Snapshot date').fill('2024-11-20');
   await page.getByRole('button', { name: 'Apply filters' }).click();
+  await page.getByText('Platform breakdown for Command FICTIONAL_B', { exact: true }).click();
   await expect(section.getByTestId('platform-serviceability-line')).toBeVisible();
   await section.getByLabel('Platform', { exact: true }).selectOption('UH-60M');
-  const fleet = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20&command=FICTIONAL_B')).json();
+  const fleet = await (await page.request.get('/api/v1/readiness/fleet?date=2024-11-20')).json();
   for (const days of [30, 90, 180, 365]) {
     await section.getByLabel('Platform historical window').selectOption(String(days));
     const body = await (await page.request.get(`${path}/series?end_date=2024-11-20&days=${days}&platform=UH-60M&command=FICTIONAL_B`)).json();
@@ -99,12 +103,13 @@ test('command/date/platform and every history window align with backend while ov
     await expect(section.locator('.platform-context')).toContainText('20 Nov 2024');
     await expect(section.locator('.platform-context')).toContainText('FICTIONAL_B');
   }
-  await expect(page.getByLabel('Total tails count')).toContainText('40');
+  await expect(page.getByLabel('Total tails count')).toContainText('160');
 });
 
 test('unsupported, network and SQL platform responses stay safe with retry and source blocking', async ({ page }) => {
   await page.route('**/api/v1/platforms*', route => route.fulfill({ status: 404, headers: { 'X-FIS4-Data-Source': 'synthetic' }, contentType: 'application/json', body: JSON.stringify({ detail: 'Not Found' }) }));
   await page.goto('/');
+  await page.getByText('Platform breakdown for Command FICTIONAL_A', { exact: true }).click();
   const section = page.getByTestId('platform-intelligence');
   await expect(section.getByText('Platform Intelligence unavailable')).toBeVisible();
   await expect(page.getByTestId('serviceability')).toBeVisible();
@@ -125,7 +130,7 @@ test('unsupported, network and SQL platform responses stay safe with retry and s
 });
 
 test('rapid platform/window changes abort delayed responses and never display obsolete selections', async ({ page }) => {
-  const original = await (await page.request.get(`${path}/series?end_date=${end}&days=30&platform=AH-64E`)).json();
+  const original = await (await page.request.get(`${path}/series?end_date=${end}&days=30&platform=AH-64E&command=FICTIONAL_A`)).json();
   let captured = false; let cancelled = false; let release: () => void = () => {};
   const held = new Promise<void>(resolve => { release = resolve; });
   page.on('requestfailed', request => { if (request.url().includes('/platforms/series?') && request.url().includes('platform=AH-64E')) cancelled = true; });
@@ -137,6 +142,7 @@ test('rapid platform/window changes abort delayed responses and never display ob
   });
   try {
     await page.goto('/');
+  await page.getByText('Platform breakdown for Command FICTIONAL_A', { exact: true }).click();
     const section = page.getByTestId('platform-intelligence');
     await expect.poll(() => captured).toBe(true);
     await section.getByLabel('Platform', { exact: true }).selectOption('UH-60M');
@@ -160,6 +166,7 @@ test.describe('platform mobile touch', () => {
     try {
       for (const theme of ['light', 'dark']) {
         await page.goto('/');
+  await page.getByText('Platform breakdown for Command FICTIONAL_A', { exact: true }).click();
         const section = page.getByTestId('platform-intelligence');
         await expect(section.getByTestId('platform-serviceability-line')).toBeVisible();
         if (theme === 'dark') await page.getByRole('button', { name: 'Use dark theme' }).click();
@@ -181,4 +188,50 @@ test.describe('platform mobile touch', () => {
       }
     } finally { await input.detach(); }
   });
+});
+
+test('each command appears once and independently owns reconciled platform counts and trends', async ({ page }, info) => {
+  const commands = await (await page.request.get(`/api/v1/readiness/commands?date=${end}`)).json();
+  const fleet = await (await page.request.get(`/api/v1/status-distribution?date=${end}`)).json();
+  const totals: Record<string, number> = Object.fromEntries(['FMC', 'PMCM', 'PMCS', 'NMCS', 'NMCM', 'DEPOT'].map(code => [code, 0]));
+  let platformCalls = 0;
+  page.on('request', request => { if (new URL(request.url()).pathname.includes('platforms')) platformCalls++; });
+  await page.goto('/');
+  await expect(page.locator('.command-row')).toHaveCount(commands.commands.length);
+  expect(platformCalls).toBe(0);
+  const first = page.getByLabel(`Command ${commands.commands[0].command} readiness`, { exact: true });
+  for (const command of commands.commands) {
+    const owner = page.getByLabel(`Command ${command.command} readiness`, { exact: true });
+    await expect(owner).toHaveCount(1);
+    const summary = owner.locator('.command-summary');
+    await expect(summary).toContainText(`${command.svc_pct.toFixed(1)}%`);
+    await expect(summary).toContainText(`${command.avail_pct.toFixed(1)}%`);
+    await expect(summary.getByText('NMC Total').locator('..')).toContainText(String(command.nmcs_tails + command.nmcm_tails));
+    await owner.locator('summary').focus(); await page.keyboard.press('Enter');
+    await expect(owner.getByTestId('platform-serviceability-line')).toBeVisible();
+    const report = await (await page.request.get(`${path}?date=${end}&command=${command.command}`)).json();
+    expect(report.platforms.reduce((sum: number, row: { total_tails: number }) => sum + row.total_tails, 0)).toBe(command.total_tails);
+    for (const [status, field] of [['FMC', 'fmc_tails'], ['NMCS', 'nmcs_tails'], ['NMCM', 'nmcm_tails'], ['DEPOT', 'depot_tails']]) {
+      expect(report.platforms.reduce((sum: number, row: { status_counts: Record<string, number> }) => sum + row.status_counts[status], 0)).toBe(command[field]);
+    }
+    expect(report.platforms.reduce((sum: number, row: { pmc_tails: number }) => sum + row.pmc_tails, 0)).toBe(command.pmc_tails);
+    for (const platform of report.platforms) {
+      const cells = owner.getByTestId(`platform-row-${platform.platform}`).getByRole('cell');
+      await expect(cells.first()).toHaveText(String(platform.total_tails));
+      await expect(cells.nth(8)).toHaveText(`${platform.svc_pct.toFixed(1)}%`);
+      await expect(cells.nth(9)).toHaveText(`${platform.avail_pct.toFixed(1)}%`);
+      for (const code of Object.keys(totals)) totals[code] += platform.status_counts[code];
+    }
+  }
+  for (const status of fleet.statuses) expect(totals[status.status]).toBe(status.count);
+  const owners = page.locator('.command-row');
+  await first.getByLabel('Platform', { exact: true }).selectOption('UH-60M');
+  await expect(first.getByRole('heading', { name: 'Platform history: UH-60M' })).toBeVisible();
+  await expect(owners.nth(1).getByLabel('Platform', { exact: true })).toHaveValue('AH-64E');
+  await expect(page.locator('.command-row')).toHaveCount(commands.commands.length);
+  const ids = await page.locator('[id]').evaluateAll(elements => elements.map(element => element.id));
+  expect(new Set(ids).size).toBe(ids.length);
+  await expect(page.locator('main')).not.toContainText(/battalion|parent_force/i);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('nested-commands.png'), fullPage: true });
 });

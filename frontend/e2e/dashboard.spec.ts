@@ -49,10 +49,10 @@ test('date and command filters use the live backend; reset restores latest', asy
   await expect(page.getByTestId('serviceability')).toHaveText('83.3%');
   await page.getByLabel('Command', { exact: true }).selectOption('B');
   await page.getByRole('button', { name: 'Apply filters' }).click();
-  await expect(page.getByTestId('serviceability')).toHaveText('66.7%');
-  await expect(page.getByTestId('availability')).toHaveText('50.0%');
+  await expect(page.getByTestId('serviceability')).toHaveText('83.3%');
+  await expect(page.getByTestId('availability')).toHaveText('71.4%');
   await expect(page.getByLabel('Command A readiness')).toHaveCount(0);
-  await expect(page.getByLabel('Total tails count')).toContainText('4');
+  await expect(page.getByLabel('Total tails count')).toContainText('7');
   await page.getByRole('button', { name: 'Latest snapshot' }).click();
   await expect(page.getByLabel('Command A readiness')).toBeVisible();
 });

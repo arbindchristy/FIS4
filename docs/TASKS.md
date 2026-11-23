@@ -2,6 +2,7 @@
 
 | Item | Status | Evidence or next action |
 |---|---|---|
+| Command-centric readiness | Implemented; local verification passed; chief-architect review pending | One summary/command with nested platforms; 128 unit tests, six final command tests, TypeScript/build pass; browser 44 pass/four intentional skips; security zero violations/10 benign leads; no publication |
 | Phase 03C-1B.2 frontend verification | Local gates passed; chief-architect review pending | 122/122 unit tests; TypeScript/build exit 0; full browser 41 passed/four intentional skips; strengthened follow-up six passed; actual mobile touch in both themes; security dispositions in PROJECT_STATE; no publication |
 | Phase 03C-1B.1 React platform intelligence | Implementation written; source review pending | Separate platform section and validated clients, shared charts/windows, product identity; focused TypeScript exit 0; no suites/build run; Phase 03C-1B.2 must add/adapt tests and verify runtime behavior |
 | Phase 03C-1A platform intelligence backend | Implemented; local verification passed; awaiting chief-architect review | Stable fictional metadata and additive cached APIs; 21 focused, 160 full, 155 portable tests and 12 harness checks pass; security exit 0, 0 violations, 10 existing leads dispositioned; unstaged/unpublished |

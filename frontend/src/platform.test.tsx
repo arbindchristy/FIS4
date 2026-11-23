@@ -130,8 +130,10 @@ describe('platform API contracts', () => {
 describe('platform dashboard integration', () => {
   it('shows API percentages verbatim, all statuses, identity and independent platform selection', async () => {
     const fetch = stubPlatforms(); const user = userEvent.setup(); render(<App />);
+    await screen.findByTestId('serviceability');
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
     await screen.findByTestId('platform-intelligence');
-    await section().findByTestId('platform-serviceability-line');
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Fleet Intelligence Dashboard');
     expect(screen.getAllByText('Fleet Intelligence Suite').length).toBeGreaterThan(0);
     expect(screen.getByLabelText('Demonstration scope')).toHaveTextContent('authentication is not implemented');
@@ -139,13 +141,13 @@ describe('platform dashboard integration', () => {
     for (const code of STATUSES) expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('columnheader', { name: new RegExp(`^${code}$`) })).toBeVisible();
     const fleet = screen.getByTestId('serviceability').textContent;
     const availability = screen.getByTestId('availability').textContent;
-    const commandCards = screen.getAllByLabelText(/^Command .* readiness$/).map(node => node.textContent);
+    const commandCards = screen.getAllByLabelText(/^Command .* readiness$/).map(node => node.querySelector('.command-summary')?.textContent);
     const overviewCalls = fetch.mock.calls.filter(call => String(call[0]).includes('/fleet?')).length;
     await user.selectOptions(screen.getByLabelText('Platform', { exact: true }), labels[1]);
     await waitFor(() => expect(section().getByTestId('platform-trend-detail')).toHaveTextContent('91.1%'));
     expect(screen.getByTestId('serviceability').textContent).toBe(fleet);
     expect(screen.getByTestId('availability').textContent).toBe(availability);
-    expect(screen.getAllByLabelText(/^Command .* readiness$/).map(node => node.textContent)).toEqual(commandCards);
+    expect(screen.getAllByLabelText(/^Command .* readiness$/).map(node => node.querySelector('.command-summary')?.textContent)).toEqual(commandCards);
     expect(fetch.mock.calls.filter(call => String(call[0]).includes('/fleet?'))).toHaveLength(overviewCalls);
     await user.click(screen.getByRole('button', { name: 'Use dark theme' }));
     expect(screen.getByRole('button', { name: 'Use light theme' })).toHaveAttribute('aria-pressed', 'true');
@@ -153,8 +155,10 @@ describe('platform dashboard integration', () => {
   });
   it('synchronizes date, command, platform and both window controls without changing overview cards', async () => {
     const fetch = stubPlatforms(); const user = userEvent.setup(); render(<App />);
+    await screen.findByTestId('serviceability');
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
     await screen.findByTestId('platform-intelligence');
-    await section().findByTestId('platform-serviceability-line');
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line');
     for (const days of WINDOWS) {
       await user.selectOptions(screen.getByLabelText('Platform historical window'), String(days));
       await waitFor(() => expect(section().getByTestId('platform-serviceability-line').getAttribute('points')!.split(' ')).toHaveLength(days));
@@ -163,8 +167,9 @@ describe('platform dashboard integration', () => {
     await user.selectOptions(screen.getByLabelText('Command', { exact: true }), 'FICTIONAL_B');
     fireEvent.change(screen.getByLabelText('Snapshot date'), { target: { value: '2024-11-20' } });
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
-    await section().findByTestId('platform-serviceability-line');
-    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('40');
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_B'));
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line');
+    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('160');
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('20 Nov 2024');
     await user.selectOptions(screen.getByLabelText('Platform', { exact: true }), labels[1]);
     await waitFor(() => expect(section().getByTestId('platform-trend-detail')).toHaveTextContent('91.1%'));
@@ -176,24 +181,29 @@ describe('platform dashboard integration', () => {
     fetch.mockImplementation((input, init) => String(input).includes('/history/platforms?') && broken
       ? Promise.resolve(jsonResponse({ ...comparison(), battalion: 'FICTIONAL_PRIVATE_MARKER' })) : normal(input, init));
     const user = userEvent.setup(); render(<App />);
+    await screen.findByTestId('serviceability');
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
     await screen.findByTestId('platform-intelligence');
-    await section().findByRole('alert');
+    await within(await screen.findByTestId('platform-intelligence')).findByRole('alert');
     expect(screen.queryByText('FICTIONAL_PRIVATE_MARKER')).not.toBeInTheDocument();
     expect(screen.getByTestId('serviceability')).toBeVisible();
     expect(screen.getByTestId('serviceability-line')).toBeVisible();
     expect(section().queryByRole('table')).not.toBeInTheDocument();
     broken = false; await user.click(section().getByRole('button', { name: 'Retry platform data' }));
-    await section().findByTestId('platform-serviceability-line');
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line');
   });
   it('keeps CSV snapshot/history unsupported states contained and blocks later SQL platform responses', async () => {
     stubApi(); const first = render(<App />);
+    await screen.findByTestId('serviceability');
+    fireEvent.click(await screen.findByText('Platform breakdown for Command A'));
     await screen.findByTestId('platform-intelligence');
-    await section().findByText('Platform Intelligence unavailable');
+    await within(await screen.findByTestId('platform-intelligence')).findByText('Platform Intelligence unavailable');
     expect(screen.getByTestId('serviceability')).toHaveTextContent('83.3%');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument(); first.unmount();
     const fetch = stubPlatforms(); const normal = fetch.getMockImplementation()!;
     fetch.mockImplementation((input, init) => String(input).includes('/platforms/series?') ? Promise.resolve(jsonResponse({ source: 'sql' }, 503, 'sql')) : normal(input, init));
     render(<App />);
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
     await screen.findByText('Synthetic mode required');
     expect(screen.getByLabelText('Selected data source')).toHaveTextContent('SQL');
     expect(screen.queryByTestId('serviceability')).not.toBeInTheDocument();
@@ -209,9 +219,10 @@ describe('platform dashboard integration', () => {
       return normal(input, init);
     });
     const user = userEvent.setup(); render(<App />);
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
     await waitFor(() => expect(held).toBeDefined());
     await user.selectOptions(screen.getByLabelText('Platform historical window'), '90');
-    await section().findByTestId('platform-serviceability-line'); expect(oldSignal?.aborted).toBe(true);
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line'); expect(oldSignal?.aborted).toBe(true);
     await act(async () => held?.(jsonResponse({ source: 'sql' }, 503, 'sql')));
     expect(screen.getByLabelText('Selected data source')).toHaveTextContent('SYNTHETIC');
     expect(section().getByTestId('platform-serviceability-line').getAttribute('points')!.split(' ')).toHaveLength(90);
@@ -220,19 +231,20 @@ describe('platform dashboard integration', () => {
     const fetch = stubPlatforms(); const normal = fetch.getMockImplementation()!;
     let held: ((value: Response) => void) | undefined; let oldSignal: AbortSignal | null | undefined;
     fetch.mockImplementation((input, init) => {
-      if (String(input) === '/api/v1/readiness/history/platforms?date=2026-11-20') {
+      if (String(input) === '/api/v1/readiness/history/platforms?date=2026-11-20&command=FICTIONAL_A') {
         oldSignal = init?.signal; return new Promise(resolve => { held = resolve; });
       }
       return normal(input, init);
     });
-    const user = userEvent.setup(); render(<App />); await waitFor(() => expect(held).toBeDefined());
+    const user = userEvent.setup(); render(<App />); fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A')); await waitFor(() => expect(held).toBeDefined());
     await user.selectOptions(screen.getByLabelText('Command', { exact: true }), 'FICTIONAL_A');
     fireEvent.change(screen.getByLabelText('Snapshot date'), { target: { value: '2024-11-20' } });
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
-    await section().findByTestId('platform-serviceability-line'); expect(oldSignal?.aborted).toBe(true);
+    fireEvent.click(await screen.findByText('Platform breakdown for Command FICTIONAL_A'));
+    await within(await screen.findByTestId('platform-intelligence')).findByTestId('platform-serviceability-line'); expect(oldSignal?.aborted).toBe(true);
     await act(async () => held?.(jsonResponse(comparison())));
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('20 Nov 2024');
     expect(within(section().getByRole('region', { name: 'Platform comparison table' })).getByRole('caption')).toHaveTextContent('FICTIONAL_A');
-    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('40');
+    expect(screen.getByLabelText('Total tails count')).toHaveTextContent('160');
   });
 });

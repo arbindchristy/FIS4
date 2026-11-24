@@ -1,5 +1,45 @@
 # FIS4 release gates
 
+## PR #15 correction acceptance - 2026-11-24
+
+- Labels, coverage and features must share as-of reference eligibility; a future
+  global endpoint cannot enable a past fleet observation-gap reference. Validated
+  target carry remains distinct from reference eligibility.
+- Rolling-window NMCS starts use the preceding usable day without including its
+  population in the window. Ongoing runs/unknown predecessors do not create starts.
+- Pre-fix reproductions, final focused 41/41 and protected 28/28 PASS; final portable,
+  staged security, corrected fictional counts and commands in PROJECT_STATE.md.
+- Prior eligibility formula/counts are superseded by the corrected assessment;
+  underlying four-year fleet coverage and 872 NMCS runs remain unchanged. No
+  readiness, source/provider, simulator, dependency, model or deployment changes.
+- Existing six-year, real-source, training authorization and customer runtime gates
+  remain open; resolving these review defects authorizes no merge or deployment.
+
+
+## Phase 05A exact-date NMCS foundation gate - 2026-11-24
+
+- Applicable scope: NMCS occupancy at T+H, H=1..180, not any-onset, NMCM or combined
+  NMC prediction. Current NMCS aircraft remain eligible. No model is trained/loaded.
+- Require observed or explicitly validated reconstructed target status; missing
+  target/cutoff coverage produces null, not a negative label. Carry approval and
+  source/assignment/calendar assumptions must be resolved for real integration.
+- Feature cutoff <= T; no future outcomes or latent simulator episode data.
+  Explicit window coverage, null hours, episode censoring and leading-zero text IDs.
+- Final 35 focused tests PASS; portable/security/protected results and actual
+  commands in PROJECT_STATE.md. No readiness/API/simulator/frontend/deployment or
+  canonical dependency changes; FIS-001/FIS-002/FIS-003 preserved byte-for-byte.
+- Contract/feasibility: NMCS_FOUNDATION.md. Four years supports experiments, not the
+  eventual six-year acceptance or validated operational performance. Overlapping
+  examples are not independent failures. No accuracy/probability claim is allowed.
+- Future Phase 05B requires separate training/dependency authorization, fictional
+  dataset provenance, purged temporal evaluation and preprocessing fitted on train
+  only. Later customer inference requires fresh Linux dependency/memory/cold-start/
+  functional checks plus FIS-002 Windows offline exact-package acceptance.
+- PR #14 is already merged in this baseline; prior deployment publication statuses
+  below are historical. Neither that merge nor this foundation accepts Render
+  hosting, real SQL, operational prediction or a separate NMCM implementation.
+
+
 ## Render Free-only focused preflight - 2026-11-23
 
 Current publication status: [PR #14](https://github.com/arbindchristy/FIS4/pull/14)

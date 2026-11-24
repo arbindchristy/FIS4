@@ -1,5 +1,31 @@
 # FIS4 task backlog
 
+## PR #15 review corrections - 2026-11-24
+
+- Fixed shared as-of reference eligibility for labels, coverage and features;
+  preserved preceding-day context for rolling-window NMCS episode starts.
+- Six regression tests reproduce both defects; corrected focused 41/41 and protected
+  readiness 28/28 PASS. Final portable/staged security evidence: PROJECT_STATE.md.
+- Corrected fictional eligibility removes 160 examples at every H=1..180; the
+  original counts below are superseded. No history generation algorithm change.
+- Existing six-year dataset, source mapping and separate ML acceptance gates remain.
+
+
+## Phase 05A NMCS foundation - 2026-11-24
+
+- Implemented: pure H=1..180 exact-target-date NMCS labels, current-NMCS inclusion,
+  explicit reconstructed-target approval, gap/censor-aware as-of-safe features and
+  deterministic fictional tests. No training, model/API/UI or NMCM prediction.
+- Evidence: 35 focused tests PASS; four-year coverage 872 NMCS runs and all 180
+  horizon example counts. Final portable/security publication gates are recorded
+  in PROJECT_STATE.md; contract/limitations in NMCS_FOUNDATION.md.
+- Next: separately approved Phase 05B offline fictional model experiments, six-year
+  dataset, compatible ML dependency approval, purged time splits and independent
+  evaluation. No real-source or legacy model compatibility is claimed.
+- PR #14 is merged in current main; earlier open/pre-publication rows below are
+  historical. No Render deployment or hosting acceptance claim is made here.
+
+
 ## Render Free-only focused preflight - 2026-11-23
 
 Current publication status: [PR #14](https://github.com/arbindchristy/FIS4/pull/14)

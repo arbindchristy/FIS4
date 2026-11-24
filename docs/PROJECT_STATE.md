@@ -1,5 +1,63 @@
 # FIS4 project state
 
+## Phase 05A NMCS foundation - 2026-11-24
+
+Branch feature/05a-nmcs-foundation; baseline origin/main
+1565e7b82c09e9bd263f29e8c8ae292d1b5eeee6. Main advanced from expected d4d11b4
+by README title only, inspected and reported before implementation. PR #14 is merged
+in this baseline; older open-PR statements below are historical checkpoints.
+No claim that Render was deployed or hosting acceptance completed.
+
+Implemented pure exact-date NMCS occupancy labels (H=1..180), strict normalized
+observation/daily reconstruction, explicit carry validation, null censored targets,
+as-of-safe history features and aggregate fictional coverage assessment. Current
+NMCS remains eligible; NMCM is never the positive target. Separate six-year requested
+reference, missing-hours flags and gap/episode censoring are explicit. No readiness,
+API, dashboard, simulator, SQL, legacy artifact or deployment implementation changes.
+Contract, source assumptions and feasibility: [NMCS_FOUNDATION.md](NMCS_FOUNDATION.md).
+
+Actual commands from repository root (existing .venv; no installs):
+
+| Command | Actual result |
+|---|---|
+| `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_nmcs.py -v` | Final source: 35/35 PASS, 1.064 s; zero failures/errors/skips |
+| `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_readiness.py -v` | 28/28 protected Phase 01 tests PASS, 1.381 s, including five original source-backed parity cases |
+| `.venv/Scripts/python.exe -B scripts/assess_nmcs.py` | Exit 0, one generation/validation/assessment in 16.32 s; 160 tails/four commands; 1,461 days/233,760 tail-days; 872 separate NMCS runs; no initial left-censored NMCS; all 180 horizon counts reported |
+| `powershell.exe -NoProfile -File scripts/verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe -TestMode Portable` | Initial source: 187/187 PASS, 170.714 s; final source: 190/190 PASS, 214.568 s; zero failures/errors/skips |
+| `powershell.exe -NoProfile -File scripts/security_check.ps1` | Pre-stage exit 0, 78 index/working files, zero violations; final staged: mandatory staged result recorded in the PR publication evidence |
+| `git -c safe.directory=C:/AI/Projects/FIS4 diff --cached --check` | PASS, exit 0; exact eight-file scope |
+| Protected baseline comparison against 1565e7b | PASS: original APIs/providers/simulator/readiness/tests, FIS decisions, Windows/frontend/deployment dependencies and runtime files unchanged |
+
+The final portable rerun is necessary because three focused tests and final cache-read
+source changed after the first gate. Five external-reference tests are intentionally
+excluded from that run; the separately required 28-test Phase 01 run includes
+those original source-backed cases. No model/SQL access or operational records.
+No unrelated frontend/browser/build suites
+or engineering-harness failure-path tests rerun: their implementation is unchanged.
+Raw aggregate evidence/logs stay ignored under .harness-test-tmp/phase05a-*.
+
+Security dispositions: ten existing benign leads (five expressions in index and
+working tree): config.py:30 SecretStr declaration; providers.py:86 runtime settings
+binding; providers.py:89 injected-secret binding; dashboard.spec.ts:14 loopback
+hostname comparison; historical PROJECT_STATE server-reuse suffix match. No live
+credential/operational endpoint. Five new untracked source/test/contract files were
+explicitly scanned with unchanged Inspect-Text rules: zero additional leads.
+Scanner REVIEW REQUIRED is retained and dispositioned; not a CVE attestation.
+Unrelated pre-existing patches/local launcher are not reviewed for publication and
+remain excluded. All existing worktrees/evidence preserved.
+
+CONDITIONAL GO for separately approved offline fictional Phase 05B model experiments
+only. Six-year data generation, exact compatible ML dependencies, training-fold-only
+preprocessing, purged temporal splits and independent per-horizon evaluation remain
+future work. No accuracy, probability, rules, inference or customer-release claim.
+Real-source calendar, duplicate ordering, active population, current-assignment
+leakage, target-gap validation and hours mapping remain blockers for operational
+integration. This NMCS-only instruction authorizes no NMCM prediction; prior
+potential separate-NMCM release text is not the scope of Phase 05A. Fresh Linux
+runtime/memory/cold-start/functional and Windows offline acceptance remain required
+before any later customer ML release.
+
+
 ## Render Free-only focused preflight - 2026-11-23
 
 Current publication status: [PR #14](https://github.com/arbindchristy/FIS4/pull/14)

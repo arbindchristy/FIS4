@@ -1,5 +1,80 @@
 # FIS4 project state
 
+## Phase 05B dependency-independent preparation - 2026-11-24
+
+PARTIAL / DEPENDENCY BLOCKED. Branch feature/05b-nmcs-modeling at required merged
+PR #15 baseline cb12229071dcae580d636300b9119aaf4f5a1a48. Only preparation,
+empirical baseline development and tests proceeded under the explicit fallback.
+The existing CPython 3.13.7 .venv has NumPy 2.3.4/pandas 2.3.3; scikit-learn,
+SciPy, joblib and threadpoolctl are absent, and no workspace modeling environment
+or wheel bundle was found. No installs/upgrades/downloads or legacy model loading.
+Logistic/boosted ML candidates, tuning, calibration and locked testing are NOT RUN.
+Full Phase 05B scientific acceptance and Phase 05C are NO-GO until these gates
+are completed. Only the dependency-independent preparation is eligible for a
+clearly marked review PR after code/security gates; it is not ML completion.
+
+New source: prediction/experiments.py (purged partitions, fixed raw feature schema,
+three empirical probability baselines, metrics/cluster diagnostics and manifest
+checks); scripts/prepare_nmcs_modeling.py (separate six-year preparation/replay,
+verified data reuse); tests/test_experiments.py. Scientific contract/report and
+actual artifact hashes: [NMCS_MODELING.md](NMCS_MODELING.md). Three governance
+files updated. No Phase 05A, readiness, API, simulator, frontend, dependency,
+SQL, deployment or other-worktree changes. Unrelated patches/launcher preserved.
+
+Actual generation: one separate fictional 2020-11-21..2026-11-20 world, seed 42017,
+160 tails/four commands/four platforms, 2,191 days/350,560 aircraft-days; 1,361 NMCS
+runs, 12,950 NMCS days (3.694089%). Completed duration n=1,354, mean 9.5325 days;
+seven right-censored runs. All 180 label counts measured; H=180 eligible 321600,
+positive 11843. Inspection/phase are both missing in the event projection. Complete
+30/90/180/365 windows: 345760/336160/321760/292320 reference-tail pairs.
+
+Actual experiment commands (root, existing .venv):
+- `.venv/Scripts/python.exe -B scripts/prepare_nmcs_modeling.py`: exit 0, 47.640 s.
+- `.venv/Scripts/python.exe -B scripts/prepare_nmcs_modeling.py --reuse-dataset phase05b-six-year-42017-v1 --output-name phase05b-six-year-42017-v2`: exit 0, 22.601 s; numerical tie guard, no regeneration.
+- `.venv/Scripts/python.exe -B scripts/prepare_nmcs_modeling.py --reuse-dataset phase05b-six-year-42017-v2 --output-name phase05b-six-year-42017-v3`: exit 0, 26.152 s; added feature-completeness counts, no regeneration.
+
+All runs/evidence retained; dataset and empirical-parameter hashes are identical
+across the three runs. Final ignored directory .harness-test-tmp/phase05b-six-year-
+42017-v3 contains CSV, baseline JSON, development report and versioned manifest.
+Manifest SHA-256 ff827565c2809bee36681456630155f99aa8ecad42dc5dcd78c4ad1c9bda089b;
+source revision plus exact working-source hashes recorded, no false clean-code claim.
+No trained ML artifact exists. Artifact integrity and source-hash checks PASS.
+
+Development replay: train 2020-11-21..2023-11-20; validation 2023-11-21..2024-11-20;
+calibration and locked test each reserve a following year and are not scored/fitted.
+Common weekly cohort: 27 dates x 160 tails = 4320 examples per horizon/method,
+purged at H=180. Checkpoints 7/30/60/90/120/150/180 plus 14/45/123. H=7 occupancy/
+recovery Brier 0.028358/0.025164; H=180 0.035237/0.035232 (tiny difference).
+Current-NMCS/recovered tails included; group/calibration/lift/fleet counts and
+exploratory tail/time-cluster intervals are reported. Seven 28-day time clusters
+are too few for strong long-horizon claims; no paired superiority/ML/calibration/
+accuracy/customer-release acceptance is asserted.
+
+Actual verification:
+- `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_experiments.py -v`: final 19/19 PASS, 0.263 s; deterministic empirical fitting, cutoff/schema/integrity/probability checks and numerical ranking guard.
+- `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_nmcs.py -v`: 41/41 PASS, 0.820 s.
+- `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_readiness.py -v`: 28/28 PASS, 1.180 s.
+- `powershell.exe -NoProfile -File scripts/verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe -TestMode Portable`: initial 214/214 PASS, 165.017 s; final 215/215 PASS, 160.352 s; zero failures/errors/skips.
+- `powershell.exe -NoProfile -File scripts/security_check.ps1`: pre-stage exit 0; 83 tracked/index files, zero confirmed violations, ten existing benign leads; mandatory post-staging result in publication evidence.
+- Explicit untracked source/report review with unchanged Inspect-Text rules: four new source/report files explicitly scanned, zero additional leads.
+- `git diff --check` and protected-baseline comparison: PASS; only the reviewed seven preparation files may be staged.
+
+The final portable run follows a new numerical-stability test/code correction.
+Five external-reference cases remain excluded there; the separate 28-test baseline
+includes original parity cases. No frontend/browser/build or unchanged harness
+failure-path suites repeated. Raw logs .harness-test-tmp/phase05b-* stay ignored.
+
+Existing ten benign security leads retain their dispositions below (SecretStr,
+runtime settings/injected-secret bindings, loopback comparison and historical
+server-reuse suffix match). No rules weakened. Heuristic scanning is not a CVE
+attestation. The new fictional artifacts are not in the index or Docker context.
+To continue: approve/provide a separately pinned scientific environment or audited
+wheel bundle; then implement the actual candidate estimators, train-only transforms,
+calibration and independent locked evaluation. No app/runtime dependency change is
+authorized by this missing-dependency report. Full six-year warm-up cannot be
+claimed for early references; dataset/history/assignment limitations remain explicit.
+
+
 ## PR #15 automated review corrections - 2026-11-24
 
 Two confirmed defects corrected on feature/05a-nmcs-foundation from 9e20f88:

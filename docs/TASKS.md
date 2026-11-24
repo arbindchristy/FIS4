@@ -1,5 +1,21 @@
 # FIS4 task backlog
 
+## Phase 05B preparation checkpoint - 2026-11-24
+
+- Done: separate six-year fictional world, observed-only coverage/episode/feature
+  assessment; empirical occupancy/recovery/transition baselines; purged development
+  replay and uncertainty/metric/artifact preparation; 19 new focused tests.
+- BLOCKED: scikit-learn/SciPy/joblib/threadpoolctl absent; no modeling environment
+  or offline wheel bundle. Logistic/boosted candidates and calibration/locked-test
+  scientific acceptance NOT RUN. No installations or legacy model loading.
+- NO-GO Phase 05C; Phase 05B scientific acceptance remains incomplete. A clearly
+  marked preparation-only PR may be published after code/security checks pass;
+  it does not accept the missing ML work. Ignored evidence remains local.
+- Next: separately approve a pinned scientific environment, then candidate training,
+  preprocessing/calibration and locked evaluation. No inference/API/frontend/Render
+  work. Actual results and manifest: NMCS_MODELING.md and PROJECT_STATE.md.
+
+
 ## PR #15 review corrections - 2026-11-24
 
 - Fixed shared as-of reference eligibility for labels, coverage and features;

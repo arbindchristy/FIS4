@@ -1,5 +1,27 @@
 # FIS4 release gates
 
+## Phase 05B preparation / scientific-acceptance gate - 2026-11-24
+
+- Partial preparation only: verified merged Phase 05A baseline; separate six-year
+  fictional dataset, empirical baselines and development replay. Preserve the
+  four-year dashboard world, formulas, APIs, simulator algorithm and app dependencies.
+- Missing scientific dependencies block logistic/boosted ML candidates. No substitute
+  performance, accuracy, calibrated-ML or training success may be claimed. Follow
+  the explicit dependency fallback: no silent installs; no model artifact execution.
+- Calibration and final chronological test remain reserved. Common validation
+  references, purged target boundaries and train-only counts are required; tail/time
+  overlap limits statistical independence. A marginal interval is not paired skill.
+- Full Phase 05B scientific acceptance / Phase 05C: NO-GO until actual ML comparisons beat the
+  strongest baseline with meaningful independent evidence, calibration and locked
+  testing complete. Long-horizon baseline improvement here is negligible.
+- Feature/source/provenance manifests and tests in NMCS_MODELING.md; actual focused,
+  protected, portable/security evidence in PROJECT_STATE.md. New dependencies need
+  separate modeling-environment/wheel approval; Windows/Linux compatibility and later
+  offline-package/Render memory/cold-start/functional gates remain unverified.
+- A preparation-only review PR may follow successful code/security checks without
+  claiming full ML completion. No merge, deployment or dependency installation.
+
+
 ## PR #15 correction acceptance - 2026-11-24
 
 - Labels, coverage and features must share as-of reference eligibility; a future

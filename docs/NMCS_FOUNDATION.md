@@ -81,6 +81,15 @@ return null with reference_unavailable, target_unavailable or after_cutoff.
 No missing outcome is filled as non-NMCS. Dates use calendar arithmetic, including
 leap days. An incomplete target horizon is not eligible for training/evaluation.
 
+PR #15 correction: target_at, label_coverage and features_at share reference_at.
+A reference date must have at least one fleet observation on that calendar date
+within the validated cutoff, plus a usable state for the requested tail. A different
+tail's same-day observation can establish the visible global endpoint; explicitly
+validated tail carry is still allowed. Later observations cannot make an earlier
+fleet-wide gap reference eligible. Target dates may still use explicitly validated
+carry: outcome availability and prediction-time reference eligibility are distinct.
+Immutable observation-date membership is indexed once, not rebuilt per label.
+
 ## Feature contract and leakage boundaries
 
 `features_at(history, tail, reference_date)` returns a separate dictionary with no
@@ -90,6 +99,11 @@ available history dates. Default requested reference is six calendar years endin
 T inclusive (day after prior anniversary); it does not claim six years are present.
 Future raw observations cannot extend the feature-visible global endpoint.
 Only immutable daily rows at or before T are inspected; no per-query fleet rebuild.
+Rolling-window episode starts inspect the immediately preceding usable day from
+history, then count only starts whose dates lie in the requested window. An NMCS
+first window day preceded by usable non-NMCS counts once. Pre-existing NMCS or an
+unknown/unusable predecessor does not establish a new start. The lookbehind does
+not add an extra day to the window population, duration or NMCS-day count.
 
 | Feature group | Definition / explicit absence |
 |---|---|
@@ -121,7 +135,9 @@ assignment/extraction evidence. Rejecting within-extraction changes cannot solve
 
 Command: `.venv/Scripts/python.exe -B scripts/assess_nmcs.py` (exit 0).
 Seed 42017/as-of 2026-11-20; unchanged generator, one generation only, 16.32 seconds
-for generation, validation and assessment on this laptop. No memory benchmark or
+for the original generation, validation and assessment on this laptop.
+The PR #15 corrected reassessment exited 0 in 15.621 seconds, saved separately in
+`.harness-test-tmp/phase05a-review-feasibility.json`; original evidence is retained. No memory benchmark or
 Render/Windows inference timing is implied. Local ignored evidence:
 `.harness-test-tmp/phase05a-feasibility.json` (PowerShell UTF-16 redirected JSON).
 The script prints aggregate JSON only; no rows/artifacts are exported or committed.
@@ -132,18 +148,22 @@ Zero initially left-censored NMCS runs. These are separate temporal episodes,
 not 872 statistically independent/IID failures or fitted operational observations.
 Adjacent labels and offsets are strongly correlated.
 
-With explicit validated synthetic carry, eligible examples for **every** H in
-1..180 are exactly `160 * (1461 - H)`. The script and `label_coverage` enumerate
-eligible and positive counts for all 180 offsets without materializing 42 million
-overlapping target objects. Example actual counts:
+With explicit validated synthetic carry **and as-of reference eligibility**, the
+corrected eligible examples for every H in 1..180 are exactly
+`160 * (1460 - H)` for this measured dataset only. One fleet-wide observation-gap
+reference day is excluded: **160 fewer examples at each of all 180 horizons**.
+The former `160 * (1461 - H)` formula is superseded; it counted references that
+could not produce as-of-safe features. Fleet size and historical coverage did not
+change. The script and label_coverage enumerate counts without materializing
+42 million overlapping target objects. Corrected actual counts:
 
 | H (days) | Eligible tail/reference-date pairs | NMCS positives |
 |---|---:|---:|
-| 1 | 233,600 | 8,135 |
-| 7 | 232,640 | 8,109 |
-| 30 | 228,960 | 8,001 |
-| 90 | 219,360 | 7,609 |
-| 180 | 204,960 | 7,031 |
+| 1 | 233,440 | 8,132 |
+| 7 | 232,480 | 8,103 |
+| 30 | 228,800 | 7,995 |
+| 90 | 219,200 | 7,602 |
+| 180 | 204,800 | 7,028 |
 
 The event-only projection contains no hours: this report makes no claim of complete
 inspection/phase feature availability. Inspection can later join validated daily
@@ -176,7 +196,11 @@ partial-null intraday values, missing weekends, ownership conflicts/leading zero
 cutoff/feature leakage, current NMCS, left/right censoring, deterministic input order,
 and coverage counts independently checked against individual `target_at` labels.
 Reconstruction parity imports the unchanged readiness engine on fictional fixtures.
-Exact executed results and security dispositions are in PROJECT_STATE.md.
+Six added PR #15 regressions reproduce both review defects: the pre-fix 41-test
+run fails 19 assertions; corrected focused tests pass 41/41. They cross-check all
+180 coverage horizons against featureable references, preserve future isolation,
+and cover known, ongoing and unknown-predecessor window boundaries across the
+four supported windows. Exact commands/results are recorded in PROJECT_STATE.md.
 
 Foundation code uses Python standard library only. The assessment/parity tests reuse
 already pinned pandas/simulator dependencies. No Windows/Linux runtime pin changes,

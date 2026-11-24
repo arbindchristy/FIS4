@@ -78,6 +78,49 @@ class TargetTests(unittest.TestCase):
             self.assertEqual(report[horizon]['eligible'], sum(l.value is not None for l in labels))
             self.assertEqual(report[horizon]['nmcs_positive'], sum(l.value == 1 for l in labels))
 
+    def test_sparse_references_match_feature_availability(self):
+        h = history([obs(0), obs(5, 'NMCS')], carry=True)
+        for offset in range(1, 5):
+            with self.subTest(offset=offset):
+                day = START + timedelta(days=offset)
+                with self.assertRaises(ValueError):
+                    features_at(h, '000001', day)
+                self.assertEqual(target_at(h, '000001', day, 1).reason, 'reference_unavailable')
+        self.assertEqual(label_coverage(h)[1], {'eligible': 1, 'nmcs_positive': 0})
+
+    def test_coverage_matches_featureable_references_for_every_horizon(self):
+        h = history([obs(0), obs(5, 'NMCS'), obs(10),
+                     obs(0, tail='000002'), obs(2, tail='000002')], carry=True)
+        featureable = {}
+        for tail in h.by_tail:
+            featureable[tail] = []
+            for offset in range(11):
+                day = START + timedelta(days=offset)
+                try:
+                    features_at(h, tail, day)
+                except ValueError:
+                    continue
+                featureable[tail].append(day)
+        report = label_coverage(h)
+        for horizon in range(1, 181):
+            labels = [target_at(h, tail, day, horizon)
+                      for tail, days in featureable.items() for day in days]
+            with self.subTest(horizon=horizon):
+                self.assertEqual(report[horizon]['eligible'], sum(l.value is not None for l in labels))
+                self.assertEqual(report[horizon]['nmcs_positive'], sum(l.value == 1 for l in labels))
+        # A fleet observation makes another tail's explicitly validated carry usable.
+        day = START + timedelta(days=2)
+        self.assertEqual(features_at(h, '000001', day)['current_status'], 'FMC')
+        self.assertEqual(target_at(h, '000001', day, 1).value, 0)
+
+    def test_future_records_cannot_enable_past_reference(self):
+        rows = [obs(0), obs(5, 'NMCS')]
+        for h in [history(rows, carry=True), history(rows + [obs(10)], carry=True)]:
+            day = START + timedelta(days=3)
+            with self.assertRaises(ValueError):
+                features_at(h, '000001', day)
+            self.assertEqual(target_at(h, '000001', day, 2).reason, 'reference_unavailable')
+
 
 class ReconstructionTests(unittest.TestCase):
     def test_duplicate_identical_rows_and_order(self):
@@ -202,6 +245,28 @@ class FeatureTests(unittest.TestCase):
                 self.assertTrue(f['windows'][window]['complete'])
                 self.assertEqual(f['windows'][window]['nmcs_days'], (window + 1) // 2)
         self.assertFalse(f['history_complete'])
+
+    def test_nmcs_start_on_first_window_day_has_preceding_context(self):
+        for window in (30, 90, 180, 365):
+            rows = [obs(i, 'NMCS' if i == 1 else 'FMC') for i in range(window + 1)]
+            f = features_at(history(rows), '000001', START + timedelta(days=window), windows=(window,))
+            with self.subTest(window=window):
+                self.assertTrue(f['windows'][window]['complete'])
+                self.assertEqual(f['windows'][window]['nmcs_days'], 1)
+                self.assertEqual(f['windows'][window]['nmcs_known_starts'], 1)
+
+    def test_ongoing_nmcs_before_window_is_not_a_new_start(self):
+        rows = [obs(i, 'NMCS' if i <= 1 else 'FMC') for i in range(31)]
+        f = features_at(history(rows), '000001', START + timedelta(days=30), windows=(30,))
+        self.assertEqual(f['windows'][30]['nmcs_days'], 1)
+        self.assertEqual(f['windows'][30]['nmcs_known_starts'], 0)
+
+    def test_unknown_preceding_day_does_not_establish_window_start(self):
+        rows = [obs(0)] + [obs(i, 'NMCS' if i == 2 else 'FMC') for i in range(2, 32)]
+        f = features_at(history(rows), '000001', START + timedelta(days=31), windows=(30,))
+        self.assertTrue(f['windows'][30]['complete'])
+        self.assertEqual(f['windows'][30]['nmcs_days'], 1)
+        self.assertEqual(f['windows'][30]['nmcs_known_starts'], 0)
 
     def test_recurrence_and_transition_statistics(self):
         rows = [obs(i, 'NMCS' if i in (1, 2, 5) else 'NMCM') for i in range(7)]

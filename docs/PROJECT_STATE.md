@@ -1,5 +1,42 @@
 # FIS4 project state
 
+## PR #15 automated review corrections - 2026-11-24
+
+Two confirmed defects corrected on feature/05a-nmcs-foundation from 9e20f88:
+(1) target/coverage admitted sparse reference days that features rejected; all
+three now share a cutoff-safe reference_at policy and immutable fleet observation-
+date index; (2) rolling-window known starts discarded the preceding usable day.
+Starts now use that context without adding it to window-day counts; ongoing NMCS
+and unknown predecessors remain censored. No backend, simulator, formula,
+frontend, dependency, training, model, SQL or deployment changes.
+
+Six new regressions: pre-fix focused run 41 tests, 19 failing assertions, exit 1;
+after correction 41/41 PASS, 1.122 s, exit 0. Same exact focused command:
+`.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_nmcs.py -v`.
+Protected command `.venv/Scripts/python.exe -B -m unittest discover -s tests -p
+test_readiness.py -v`: 28/28 PASS, 1.220 s, exit 0.
+Final `powershell.exe -NoProfile -File scripts/verify.ps1 -PythonExecutable
+C:\AI\Projects\FIS4\.venv\Scripts\python.exe -TestMode Portable`: 196/196 PASS, 146.161 s, exit 0; zero failures/errors/skips; five
+external-reference tests excluded from this portable run.
+Mandatory staged `powershell.exe -NoProfile -File scripts/security_check.ps1`:
+final result is recorded in the PR review-correction publication evidence.
+Existing ten benign scanner leads retain their dispositions below; no rule changes.
+Staged whitespace, exact six-file correction scope and protected-baseline checks
+are required before commit. No unrelated suites are repeated.
+
+Reassessed with `.venv/Scripts/python.exe -B scripts/assess_nmcs.py`: exit 0,
+15.621 s. Coverage unchanged: 160 tails, four commands, 1,461 days/233,760 tail-days,
+10,273 sparse events, 872 NMCS runs, zero initially left-censored NMCS. At every
+H=1..180, eligible count falls by 160 because one fleet observation-gap reference
+cannot produce as-of features. Correct dataset-specific formula is 160*(1460-H).
+H=1/7/30/90/180: eligible 233440/232480/228800/219200/204800; NMCS positives
+8132/8103/7995/7602/7028. The original figures below are historical and superseded
+for eligible/positive counts only. No simulator or target-date meaning changed.
+Corrected contract: NMCS_FOUNDATION.md. Original logs preserved; new evidence uses
+.harness-test-tmp/phase05a-review-*. Six-year/real-source/ML release gates stay open.
+No merge, deployment, training or other-worktree changes are authorized.
+
+
 ## Phase 05A NMCS foundation - 2026-11-24
 
 Branch feature/05a-nmcs-foundation; baseline origin/main

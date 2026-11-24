@@ -39,11 +39,19 @@ class History:
     cutoff: datetime
     validated_reconstruction: bool
     by_tail: Mapping[str, tuple[Day, ...]]
+    observation_dates: frozenset[date]
 
     def at(self, tail: str, day: date) -> Day | None:
         rows = self.by_tail.get(tail, ())
         offset = (day - rows[0].date).days if rows else -1
         return rows[offset] if 0 <= offset < len(rows) else None
+
+    def reference_at(self, tail: str, day: date) -> Day | None:
+        """A future global endpoint cannot validate an earlier reference date."""
+        if day > self.cutoff.date() or day not in self.observation_dates:
+            return None
+        row = self.at(tail, day)
+        return row if row is not None and row.usable else None
 
 
 @dataclass(frozen=True)
@@ -133,7 +141,8 @@ def reconstruct(observations, *, cutoff: datetime,
                               last_hours[0], last_hours[1]))
             day += timedelta(days=1)
         result[tail] = tuple(output)
-    return History(ordered, cutoff, validated_reconstruction, MappingProxyType(result))
+    return History(ordered, cutoff, validated_reconstruction, MappingProxyType(result),
+                   frozenset(r.timestamp.date() for r in ordered))
 
 
 def target_at(history: History, tail: str, observation_date: date, horizon_days: int) -> Target:
@@ -143,10 +152,10 @@ def target_at(history: History, tail: str, observation_date: date, horizon_days:
     if type(horizon_days) is not int or not 1 <= horizon_days <= 180:
         raise ValueError("Forecast offset must be an integer in 1..180")
     target_date = observation_date + timedelta(days=horizon_days)
-    reference = history.at(tail, observation_date)
+    reference = history.reference_at(tail, observation_date)
     outcome = history.at(tail, target_date)
     reason = "available"
-    if observation_date > history.cutoff.date() or reference is None or not reference.usable:
+    if reference is None:
         reason = "reference_unavailable"
     elif target_date > history.cutoff.date():
         reason = "after_cutoff"
@@ -160,12 +169,14 @@ def target_at(history: History, tail: str, observation_date: date, horizon_days:
 
 def label_coverage(history: History) -> dict:
     """Bounded 1..180 occupancy counts, without materializing overlapping examples."""
+    references = {tail: tuple(history.reference_at(tail, row.date) is not None for row in rows)
+                  for tail, rows in history.by_tail.items()}
     result = {}
     for horizon in range(1, 181):
         eligible = positive = 0
-        for rows in history.by_tail.values():
-            for before, after in zip(rows, rows[horizon:]):
-                if before.usable and after.usable:
+        for tail, rows in history.by_tail.items():
+            for reference_usable, after in zip(references[tail], rows[horizon:]):
+                if reference_usable and after.usable:
                     eligible += 1
                     positive += after.status == 'NMCS'
         result[horizon] = {'eligible': eligible, 'nmcs_positive': positive}
@@ -215,12 +226,10 @@ def features_at(history: History, tail: str, reference_date: date, *,
             type(w) is not int or not 1 <= w <= 3660 for w in windows):
         raise ValueError("Unique bounded calendar windows required")
     # Reuse immutable daily rows; never rebuild a fleet snapshot per feature query.
-    # A future observation must not extend the visible global history endpoint.
+    # Shared reference eligibility requires an as-of-visible fleet observation.
     asof_cutoff = min(history.cutoff, datetime.combine(reference_date, time.max))
-    visible_end = max((r.timestamp.date() for r in history.observations
-                       if r.timestamp <= asof_cutoff), default=None)
-    current = history.at(tail, reference_date) if visible_end and reference_date <= visible_end else None
-    if current is None or not current.usable:
+    current = history.reference_at(tail, reference_date)
+    if current is None:
         raise ValueError("Reference status unavailable")
     try:
         start = reference_date.replace(year=reference_date.year - history_years) + timedelta(days=1)
@@ -270,10 +279,15 @@ def features_at(history: History, tail: str, reference_date: date, *,
         selected = [r for r in rows if r.date >= reference_date - timedelta(days=window - 1)]
         usable = sum(r.usable for r in selected)
         full = usable == window
-        episodes, _ = _episodes(selected)
+        window_starts = 0
+        for row in selected:
+            previous = history.at(tail, row.date - timedelta(days=1))
+            if (row.usable and row.status == 'NMCS' and previous is not None
+                    and previous.usable and previous.status != 'NMCS'):
+                window_starts += 1
         result['windows'][window] = {
             'expected_days': window, 'usable_days': usable, 'complete': full,
             'nmcs_days': sum(r.status == 'NMCS' for r in selected) if full else None,
-            'nmcs_known_starts': sum(not e['left_censored'] for e in episodes) if full else None,
+            'nmcs_known_starts': window_starts if full else None,
         }
     return result

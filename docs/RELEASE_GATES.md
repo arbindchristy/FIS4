@@ -1,5 +1,21 @@
 # FIS4 release gates
 
+## PR #15 correction acceptance - 2026-11-24
+
+- Labels, coverage and features must share as-of reference eligibility; a future
+  global endpoint cannot enable a past fleet observation-gap reference. Validated
+  target carry remains distinct from reference eligibility.
+- Rolling-window NMCS starts use the preceding usable day without including its
+  population in the window. Ongoing runs/unknown predecessors do not create starts.
+- Pre-fix reproductions, final focused 41/41 and protected 28/28 PASS; final portable,
+  staged security, corrected fictional counts and commands in PROJECT_STATE.md.
+- Prior eligibility formula/counts are superseded by the corrected assessment;
+  underlying four-year fleet coverage and 872 NMCS runs remain unchanged. No
+  readiness, source/provider, simulator, dependency, model or deployment changes.
+- Existing six-year, real-source, training authorization and customer runtime gates
+  remain open; resolving these review defects authorizes no merge or deployment.
+
+
 ## Phase 05A exact-date NMCS foundation gate - 2026-11-24
 
 - Applicable scope: NMCS occupancy at T+H, H=1..180, not any-onset, NMCM or combined

@@ -8,6 +8,7 @@ import json
 import math
 from pathlib import Path
 import random
+import re
 import subprocess
 import sys
 
@@ -17,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 from prediction.experiments import METHODS, canonical_bytes
 from prediction.ml_development import COLUMNS, HORIZONS, NUMERIC, feature_row, predict, score
 from prediction.nmcs import features_at, reconstruct, target_at
-from scripts.evaluate_nmcs_calibration import HEAD, TMP, digest, load_baseline, verified_json
+from scripts.evaluate_nmcs_calibration import TMP, digest, load_baseline, verified_json
 
 START = date(2025, 11, 21)
 END = date(2026, 11, 20)
@@ -36,8 +37,36 @@ def require_authorization(path, freeze_hash):
             or marker.get('freeze_sha256') != freeze_hash
             or marker.get('period') != [START.isoformat(), END.isoformat()]
             or not isinstance(marker.get('approval_reference'), str)
-            or not marker['approval_reference'].strip()):
+            or not marker['approval_reference'].strip()
+            or not isinstance(marker.get('operator'), str)
+            or not marker['operator'].strip()):
         raise ValueError('Explicit chief-architect authorization for this freeze is required')
+    return marker
+
+
+def verify_execution_authorization(marker_path, freeze_hash):
+    marker = require_authorization(marker_path, freeze_hash)
+    freeze = verified_json(TMP / 'phase05b-locked-v1.1-execution-freeze.json', freeze_hash)
+    revision = freeze.get('git_head')
+    if (not isinstance(revision, str) or not re.fullmatch(r'[0-9a-f]{40}', revision)
+            or freeze.get('protocol') != '1.1' or freeze.get('calibration_seal_sha256') != SEAL):
+        raise ValueError('Invalid execution freeze')
+    head = subprocess.check_output(
+        ['git', '-c', f'safe.directory={ROOT.as_posix()}', 'rev-parse', 'HEAD'],
+        cwd=ROOT, text=True,
+    ).strip()
+    if head != revision:
+        raise ValueError('HEAD differs from approved execution revision')
+    required = {
+        'docs/NMCS_MODELING.md', 'scripts/evaluate_nmcs_locked.py',
+        'tests/test_nmcs_locked_evaluator.py', 'scripts/evaluate_nmcs_calibration.py',
+        'prediction/nmcs.py', 'prediction/experiments.py', 'prediction/ml_development.py',
+    }
+    if set(freeze['source_sha256']) != required:
+        raise ValueError('Incomplete execution source inventory')
+    for name, expected in freeze['source_sha256'].items():
+        if digest(ROOT / name) != expected:
+            raise ValueError(f'Locked evaluator source changed: {name}')
     return marker
 
 
@@ -264,16 +293,7 @@ def main():
     parser.add_argument('--freeze-sha256', required=True)
     parser.add_argument('--authorization-marker', required=True, type=Path)
     args = parser.parse_args()
-    marker = require_authorization(args.authorization_marker, args.freeze_sha256)
-    freeze = verified_json(TMP / 'phase05b-locked-v1.1-freeze.json', args.freeze_sha256)
-    if (freeze['git_head'] != HEAD or freeze['protocol'] != '1.1'
-            or freeze['calibration_seal_sha256'] != SEAL or subprocess.check_output(
-                ['git', '-c', f'safe.directory={ROOT.as_posix()}', 'rev-parse', 'HEAD'],
-                cwd=ROOT, text=True).strip() != HEAD):
-        raise ValueError('Incorrect freeze or repository baseline')
-    for name, expected in freeze['source_sha256'].items():
-        if digest(ROOT / name) != expected:
-            raise ValueError(f'Locked evaluator source changed: {name}')
+    marker = verify_execution_authorization(args.authorization_marker, args.freeze_sha256)
     verify_calibration()
     runtime = verified_json(TMP / 'phase05b-runtime-qualification-v1/final-result.json',
                             'a8595076b43fb3bacf32bf7301c0714820ff12764dfc48e871c2c70561520c43')

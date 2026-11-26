@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+import json
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from prediction.nmcs import Observation
 from scripts import evaluate_nmcs_locked as locked
@@ -25,6 +27,47 @@ class LockedEvaluatorTests(unittest.TestCase):
                 locked.require_authorization(marker, 'reviewed')
             with self.assertRaisesRegex(ValueError, 'Hash mismatch'):
                 locked.verified_json(marker, 'wrong')
+
+    def test_main_rejects_bad_authorization_before_artifact_access(self):
+        with tempfile.TemporaryDirectory(dir=locked.TMP) as folder:
+            root = Path(folder)
+            freeze = root / 'phase05b-locked-v1.1-execution-freeze.json'
+            freeze.write_text(json.dumps({
+                'protocol': '1.1', 'calibration_seal_sha256': locked.SEAL,
+                'git_head': 'a' * 40,
+            }), encoding='utf-8')
+            freeze_hash = locked.digest(freeze)
+            marker = root / 'fabricated-marker.json'
+            approved = dict(authorization=locked.AUTHORIZATION, freeze_sha256=freeze_hash,
+                            period=['2025-11-21', '2026-11-20'],
+                            approval_reference='fixture', operator='fixture operator')
+            for changes, expected in [
+                ({'operator': None}, 'authorization'),
+                ({'operator': '  '}, 'authorization'),
+                ({'freeze_sha256': '0' * 64}, 'authorization'),
+                ({}, 'HEAD differs'),
+            ]:
+                with self.subTest(changes=changes):
+                    marker.write_text(json.dumps(approved | changes), encoding='utf-8')
+                    argv = ['locked', '--freeze-sha256', freeze_hash,
+                            '--authorization-marker', str(marker)]
+                    with (patch.object(locked, 'TMP', root),
+                          patch.object(locked.sys, 'argv', argv),
+                          patch.object(locked.subprocess, 'check_output', return_value='b' * 40),
+                          patch.object(locked, 'verify_calibration') as artifacts):
+                        with self.assertRaisesRegex(ValueError, expected):
+                            locked.main()
+                        artifacts.assert_not_called()
+                    self.assertFalse((root / 'phase05b-locked-v1.1').exists())
+            wrong_hash = '0' * 64
+            marker.write_text(json.dumps(approved | {'freeze_sha256': wrong_hash}), encoding='utf-8')
+            with (patch.object(locked, 'TMP', root),
+                  patch.object(locked.sys, 'argv', ['locked', '--freeze-sha256', wrong_hash,
+                               '--authorization-marker', str(marker)]),
+                  patch.object(locked, 'verify_calibration') as artifacts):
+                with self.assertRaisesRegex(ValueError, 'Hash mismatch'):
+                    locked.main()
+                artifacts.assert_not_called()
 
     def test_leakage_rejected_and_later_targets_do_not_change_features(self):
         start = locked.START

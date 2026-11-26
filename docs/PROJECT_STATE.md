@@ -10,7 +10,7 @@ execution directory was created. Phase 05C remains NO-GO.
 Proposed one-time command, from the repository root after separate approval:
 
 ```powershell
-.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B scripts/evaluate_nmcs_locked.py --freeze-sha256 d002f9890da2a1c04d3e20bd78ee1d3ff76efb1af5484600224316b8b71b7323 --authorization-marker .harness-test-tmp/phase05b-locked-v1.1-authorization.json
+.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B scripts/evaluate_nmcs_locked.py --freeze-sha256 <reviewed-post-publication-freeze-sha256> --authorization-marker .harness-test-tmp/phase05b-locked-v1.1-authorization.json
 ```
 
 The marker is a local review interlock. Only after explicit chief-architect
@@ -19,13 +19,15 @@ approval, create the JSON file at that path with these fields:
 ```json
 {
   "authorization": "AUTHORIZE_ONE_TIME_PHASE05B_LOCKED_TEST_V1_1",
-  "freeze_sha256": "d002f9890da2a1c04d3e20bd78ee1d3ff76efb1af5484600224316b8b71b7323",
+  "freeze_sha256": "<reviewed-post-publication-freeze-sha256>",
   "period": ["2025-11-21", "2026-11-20"],
-  "approval_reference": "<actual approval record and operator>"
+  "approval_reference": "<actual approval record>",
+  "operator": "<nonempty operator identity>"
 }
 ```
 
-Confirm reviewed file hashes against the local freeze manifest. The evaluator
+Use the post-publication execution-freeze manifest and confirm its full Git
+revision matches the checked-out HEAD. Confirm the reviewed source hashes. The evaluator
 records authorization and creates an exclusive output directory before reading
 the export. Keep the directory, including a failed attempt, as the replay
 interlock and audit record. Do not retry after outcome exposure. On success the

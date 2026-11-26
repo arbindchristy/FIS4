@@ -1,5 +1,19 @@
 # FIS4 task backlog
 
+## Phase 05B development checkpoint - 2026-11-24
+
+- Runtime qualification complete; four bounded ML candidates trained on TRAIN only
+  and compared on the existing common DEVELOPMENT cohort. No dependency changes.
+- Development completed: 208800 training / 43200 development rows, 14 isolated tests,
+  41 foundation, 28 readiness; portable 221 passed/eight isolated-only skips.
+- Negative result: no credible incremental ML advantage; retain recovery baseline.
+  LR C=1 is frozen point-best ML for reproducibility only, not a promoted champion.
+- Calibration/test remain RESERVED/NOT RUN. No automatic next stage; optional
+  diagnostic calibration requires separate authorization. Phase 05C NO-GO.
+- Local source/report/evidence await chief review. No commit/push/PR #16 change.
+  Full measured comparisons, feature interpretation and hashes: NMCS_MODELING.md.
+
+
 ## Phase 05B preparation checkpoint - 2026-11-24
 
 - Done: separate six-year fictional world, observed-only coverage/episode/feature

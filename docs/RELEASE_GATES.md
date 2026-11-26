@@ -1,5 +1,28 @@
 # FIS4 release gates
 
+## Phase 05B development-only acceptance - 2026-11-24
+
+- Qualified isolated Windows runtime reused; no app dependency changes. Dataset/
+  artifact hashes checked; no generation, baseline refit or untrusted model load.
+- Training outcomes <=2023-11-20, development outcomes <=2024-11-20. Reserved
+  statuses filtered before Observation construction; calibration/test outcomes,
+  prevalence and performance NOT INSPECTED. No fit on development or later data.
+- Fixed four-candidate plan, train-only missingness/encoding/scaling, all H=1..180,
+  exact-date NMCS labels and identical published development cohorts required.
+- Focused 14/14 isolated, 41/41 foundation, 28/28 readiness PASS; portable 229 run,
+  221 passed/eight new isolated-only skips, all executed in isolated suite. Actual
+  security, provenance, commands and interpretation recorded in PROJECT_STATE.md.
+- Criteria fail: point-best LR C=1 is worse than recovery in mean Brier/log loss;
+  no credible general ML superiority. Retain empirical baseline. Short-horizon
+  hints or unsupported long-horizon intervals do not justify promotion.
+- Frozen LR config is reproducibility evidence only. Calibration and locked test
+  require separate authorization; Phase 05C remains NO-GO. No publication authorized
+  for this update, no PR status change, merge, deployment or inference endpoint.
+- FIS-001/FIS-002/FIS-003, readiness/API/simulator/frontend/SQL/Render and all
+  production dependency pins remain unchanged. Actual operational and Linux/
+  offline-package acceptance remain separate unverified gates.
+
+
 ## Phase 05B preparation / scientific-acceptance gate - 2026-11-24
 
 - Partial preparation only: verified merged Phase 05A baseline; separate six-year

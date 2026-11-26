@@ -1,5 +1,80 @@
 # FIS4 project state
 
+## Phase 05B ML development validation - 2026-11-24
+
+Authorized training/development only, on feature/05b-nmcs-modeling, HEAD e087d3e;
+draft PR #16 is unchanged. No commit, push, staging, PR modification, merge or
+deployment. Scientific environment .harness-test-tmp/phase05b-ml-env is qualified:
+Python 3.13.7 / sklearn 1.9.1 / SciPy 1.18.1 / NumPy 2.3.4 / pandas 2.3.3 /
+joblib 1.6.0 / threadpoolctl 3.8.0, approved support pins unchanged. No installs.
+The earlier dependency-blocked checkpoints below are historical and superseded.
+
+New prediction/ml_development.py, scripts/train_nmcs_development.py and
+ tests/test_ml_development.py implement strict cutoff loading, fixed raw schema,
+train-only preprocessing, four bounded candidates, identical-cohort comparison,
+paired tail/time uncertainty and local provenance. Detailed measured report:
+NMCS_MODELING.md. No approved readiness, API, simulator, SQL, frontend, Render,
+Phase 05A implementation, decision or dependency-pin changes.
+
+The existing fictional dataset manifest ff827565c2809bee36681456630155f99aa8ecad42dc5dcd78c4ad1c9bda089b
+and approved scientific versions were checked before fitting. Only timestamps/status
+records through 2024-11-20 were admitted. No calibration/test status, prevalence or
+performance was decoded. Prior baseline JSON is TRAIN-only and hash-verified;
+only prior development_replay evidence was decoded, not full-world statistics.
+Fresh training-cutoff reconstruction blocks future global-end label extension.
+
+Pre-fit plan: training references every 14 days with one label-blind seeded offset
+per available ten-day bin, all H=1..180 supported; 208800 examples / 7412 positives,
+reference 2020-11-21..2023-11-18, final TRAIN outcome 2023-11-20. Development:
+4320 identical examples/H, ten required/arbitrary H, 43200 rows; references
+2023-11-21..2024-05-21, last outcome 2024-11-17. Correlated rows are not independent
+failures. Raw missing inspection/phase fields dropped using TRAIN only; other
+numeric TRAIN medians/missing indicators/scaling and TRAIN one-hot categories.
+
+Four fixed candidates, seed 42017, one thread, no class reweighting/resampling:
+L2 logistic C=.1/1, lbfgs tol1e-6 max1000; convergence 183/168 iterations, no warnings.
+HistGradientBoosting log_loss, learning_rate .05, 150 iterations, 15 leaves/depth4
+or 7/depth3, min_leaf200, L2=10, bins127, early_stopping=False. Fixed tree budgets
+are not an optimality claim. All four produce valid predictions at every H=1..180
+for current-NMCS and non-NMCS; no hidden future or tail-numeric features.
+
+Actual macro Brier: recovery baseline .03042103, LR C=1 .03046244, LR C=.1
+.03050050, HGB7 .03050349, HGB15 .03052928. LR C=1 is point-score best ML only,
+not a champion: .1361% worse mean Brier and worse mean log loss (.138698 vs
+.138467). Predeclared >=2% practical gain/reliability criteria fail. HGB15 H7
+Brier .024700 vs recovery .025164, but paired interval includes zero. LR H180
+Brier .035093 vs .035232, tiny gain; two time clusters cannot support a paired CI.
+Retain persistence_recovery; NO ML CHAMPION. No automatic calibration progression
+or promotion. Optional diagnostic calibration of frozen lr-c1 needs separate
+chief-architect authorization. Calibration and locked test NOT RUN; Phase 05C NO-GO.
+
+Actual commands from root (no publication):
+- `.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B scripts/train_nmcs_development.py --experiment phase05b-ml-development-v2`: exit 0, 53.258 s feature preparation, 120.386 s total; four fixed configurations, no post-result tuning.
+- `.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B -m unittest discover -s tests -p test_ml_development.py -v`: final 14/14 PASS, 4.068 s.
+- `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_nmcs.py -v`: 41/41 PASS, .777 s.
+- `.venv/Scripts/python.exe -B -m unittest discover -s tests -p test_readiness.py -v`: 28/28 PASS, 1.067 s.
+- `powershell.exe -NoProfile -File scripts/verify.ps1 -PythonExecutable C:\AI\Projects\FIS4\.venv\Scripts\python.exe -TestMode Portable`: 229 run, 221 passed / eight new isolated-estimator-only skips, 0 failures/errors, 128.734 s. All eight execute in the isolated 14-test suite; old portable tests unchanged.
+- `powershell.exe -NoProfile -File scripts/security_check.ps1`: exit 0, 87 tracked/index files, zero confirmed violations; ten existing benign leads retain documented dispositions.
+- Explicit untracked source/test review using unchanged Inspect-Text: three new source/test files reviewed, zero extra leads.
+- Git whitespace/protected-baseline checks: PASS; no frontend/build or unchanged harness failure-path suites rerun.
+
+Artifacts in ignored .harness-test-tmp/phase05b-ml-development-v2: four own fitted
+pipelines, pre-fit plan, development metrics/prediction CSV, frozen provisional
+configuration and manifest. Model/evidence/source hashes verified without model
+deserialization. Manifest SHA 689b0f5e8a5d5bc100f090bb5820125a83c0fdcda10d4b0ee4b8990ee368c938.
+Runtime certificate a8595076b43fb3bacf32bf7301c0714820ff12764dfc48e871c2c70561520c43
+is unchanged. One v1 attempt was stopped after feature preparation for a misplaced
+pandas import; its plan/log/status remain. The import-only fix changed no candidates
+or criteria; no v1 model results selected. Dataset never regenerated.
+
+Existing ten benign security leads retain prior dispositions: SecretStr, runtime
+settings and injected-secret bindings, loopback comparison, historical server-reuse
+suffix match. Rules unchanged; scanning is not CVE certification. No actual
+operational data or scientific claims from calibration/locked outcomes. Synthetic
+associations and clipped-history/assignment limitations remain. Windows development
+success is not Linux/offline-package/customer-release acceptance.
+
+
 ## Phase 05B dependency-independent preparation - 2026-11-24
 
 PARTIAL / DEPENDENCY BLOCKED. Branch feature/05b-nmcs-modeling at required merged

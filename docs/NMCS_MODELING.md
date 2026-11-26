@@ -1,3 +1,312 @@
+# Phase 05B development-validation update - 2026-11-24
+
+**Development completed; retain the empirical recovery baseline. No ML champion,
+calibration, locked testing or promotion. Phase 05C remains NO-GO.**
+Scientific dependencies are now runtime-qualified in the separate Windows Python
+3.13.7 environment. Historical dependency-blocked preparation below is preserved;
+its baseline measurements are not rewritten. No publication is authorized here.
+
+## Experiment and temporal isolation
+
+Existing branch feature/05b-nmcs-modeling, published HEAD
+e087d3ebd1db1c60f3e9e736f7062241af2ccdaf / draft PR #16 unchanged. Reused the
+verified six-year fictional artifact and existing TRAIN-only empirical parameter
+JSON. No dataset generation or empirical-baseline refit. No legacy/untrusted model
+was deserialized. Actual fitted pipelines were created in memory and dumped only
+to ignored local evidence, never loaded from an untrusted file.
+
+Dataset manifest SHA-256:
+ff827565c2809bee36681456630155f99aa8ecad42dc5dcd78c4ad1c9bda089b.
+Integrity hashing touches full file bytes; the loader filters timestamps before
+constructing any Observation or accessing status/context fields after **2024-11-20**.
+Only the development_replay section of prior baseline evidence is decoded, not its
+full-period coverage/prevalence section. Calibration/test outcomes, prevalence and
+performance were not inspected in this stage. Both remain RESERVED / NOT RUN.
+
+| Role | Authorized window | Actual use |
+|---|---|---|
+| Training | 2020-11-21..2023-11-20 | Fit preprocessing and classifiers only |
+| Development | 2023-11-21..2024-11-20 | Bounded configuration selection/comparison |
+| Calibration | 2024-11-21..2025-11-20 | Reserved, not consumed or fitted |
+| Locked test | 2025-11-21..2026-11-20 | Reserved, not consumed or scored |
+
+Training reconstructs a fresh view at its outcome cutoff so later global endpoints
+cannot extend training targets. Every sample audits T+H within its own partition.
+No random row split or random internal early-stopping split. Development baselines
+were replayed from frozen parameters solely to add required log loss/paired
+uncertainty; every horizon Brier matches the published baseline to 1e-12.
+
+Training references every 14 calendar days, 2020-11-21..2023-11-18. One seed-fixed,
+label-blind offset from each available ten-day horizon bin. **208,800 examples,
+7,412 NMCS positives**, outcomes through 2023-11-20. All offsets 1..180 occur (per-H
+counts 1,000..1,334). Repeated tails, references and episodes are correlated; this
+is not 208,800 independent aircraft failures. Sampling uses IDs only as RNG
+metadata; tail identifiers are never model input.
+
+Development uses the identical published weekly reference cohort, purged at H=180:
+2023-11-21..2024-05-21, 27 dates x 160 tails = **4,320 examples per horizon**,
+43,200 total across ten offsets, final target 2024-11-17. All methods use exactly
+the same labels/metadata at each horizon, including current-NMCS aircraft. NMCM at
+the target date is always negative. No onset/window-any-NMC relabeling.
+
+## Features, preprocessing and predeclared candidates
+
+The versioned nmcs-horizon-development-v1 schema layers the approved Phase 05A
+history features with as-of history coverage/censor flags and known-horizon
+log1p(H), current-NMCS x H and current-NMCS x log1p(H). No future state, receipt,
+repair/closure, latent simulator cause or target-derived feature. Command/platform
+are independent observed context, not organizational hierarchy or tail identity.
+
+Training-only column selection drops inspection/phase because both are wholly
+missing in this event projection; raw hours remain None/NaN. Nothing fabricates
+hours. Other partial numeric missingness uses TRAIN medians plus missing indicators,
+then TRAIN standardization. Current status/command/platform use TRAIN one-hot
+categories with unknown categories ignored at transform. No validation fitting of
+imputers/scalers/encoders; fitted statistics/categories are recorded. Six-year
+history is requested/clipped, not falsely claimed complete for early examples.
+Dataset-age features are not physical aircraft age and can cause extrapolation.
+
+No oversampling or balanced class weights: preserve observed occupancy prevalence
+for probability estimation. Rare-class diagnostics use AP/lift and current-status
+groups; raw accuracy is not a selection metric. No calibrator is fitted.
+
+Four configurations were fixed in pre_fit_plan.json before any model fit:
+
+| ID | Algorithm | Explicit configuration |
+|---|---|---|
+| lr-c01 | L2 logistic | C=0.1, l1_ratio=0, lbfgs, tol=1e-6, max_iter=1000 |
+| lr-c1 | L2 logistic | C=1, l1_ratio=0, lbfgs, tol=1e-6, max_iter=1000 |
+| hgb-15 | Histogram gradient boosting | log_loss, learning_rate=.05, 150 iterations, 15 leaves, depth 4 |
+| hgb-7 | Histogram gradient boosting | log_loss, learning_rate=.05, 150 iterations, 7 leaves, depth 3 |
+
+All seed=42017, class_weight=None, one native thread. Both trees use
+min_samples_leaf=200, L2=10, max_bins=127 and early_stopping=False. Logistic solvers
+converged in 183/168 iterations without warnings. Trees completed their fixed
+150-iteration budget; this is not proof of an optimal asymptotic solution.
+All four passed finite [0,1] prediction checks for **every H=1..180**, separately
+for current-NMCS and non-NMCS examples. Arbitrary offsets 14/45/123 are evaluated.
+
+## Frozen selection rule and actual results
+
+Primary: equal-horizon mean Brier, convergence required. Experimental practical
+criterion: >=2% relative mean Brier improvement, no >5% per-horizon degradation,
+and mean log loss no worse than the previously strongest empirical baseline.
+These are predeclared research criteria, not customer-approved operational risk
+thresholds or FIS-001 changes. Ties use log loss and deterministic ID order.
+Current-status stability/interpretability and clustered uncertainty are disclosed.
+No new configurations/features were tried after seeing the results.
+
+| Method | Mean Brier | Mean log loss |
+|---|---:|---:|
+| historical_occupancy | 0.03076571 | 0.14103308 |
+| persistence_recovery | 0.03042103 | 0.13846677 |
+| transition_rule | 0.03051790 | 0.13881067 |
+| hgb-15 | 0.03052928 | 0.13906575 |
+| hgb-7 | 0.03050349 | 0.13894054 |
+| lr-c01 | 0.03050050 | 0.13886260 |
+| lr-c1 | 0.03046244 | 0.13869779 |
+
+LR C=1 is the point-score best ML configuration, frozen in frozen_candidate.json
+for reproducibility only. It is **0.1361% worse** in mean Brier than recovery and
+worse in mean log loss. It improves Brier at only 7 and 180 of the ten tested
+offsets. Practical improvement/reliability criteria fail; no ML champion selected.
+The strongest baseline remains persistence_recovery. Neither a tiny advantage at
+one horizon nor improved ranking overrides probability reliability and uncertainty.
+
+Brier comparisons (all required checkpoints plus arbitrary offsets):
+
+| H | Occupancy | Recovery | Transition | LR C=.1 | LR C=1 | HGB15 | HGB7 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 7 | 0.028358 | 0.025164 | 0.025443 | 0.025277 | 0.024843 | 0.024700 | 0.024744 |
+| 14 | 0.028573 | 0.028505 | 0.029089 | 0.028534 | 0.028570 | 0.028488 | 0.028476 |
+| 30 | 0.029433 | 0.029394 | 0.029412 | 0.029494 | 0.029465 | 0.029528 | 0.029490 |
+| 45 | 0.030723 | 0.030695 | 0.030699 | 0.030805 | 0.030781 | 0.030825 | 0.030791 |
+| 60 | 0.030293 | 0.030256 | 0.030252 | 0.030390 | 0.030412 | 0.030360 | 0.030343 |
+| 90 | 0.030078 | 0.030060 | 0.030060 | 0.030167 | 0.030193 | 0.030203 | 0.030165 |
+| 120 | 0.029433 | 0.029395 | 0.029446 | 0.029577 | 0.029598 | 0.029765 | 0.029723 |
+| 123 | 0.031798 | 0.031780 | 0.031806 | 0.031881 | 0.031894 | 0.032063 | 0.032052 |
+| 150 | 0.033732 | 0.033730 | 0.033736 | 0.033778 | 0.033777 | 0.034006 | 0.033947 |
+| 180 | 0.035237 | 0.035232 | 0.035236 | 0.035103 | 0.035093 | 0.035355 | 0.035304 |
+
+Detailed best-ML development metrics (uncalibrated LR C=1):
+
+| H | Log loss | ROC-AUC | AP | ECE10 | Top-decile lift | NMCS prevalence |
+|---|---:|---:|---:|---:|---:|---:|
+| 7 | 0.111940 | 0.7132 | 0.2184 | 0.008242 | 4.286 | 2.9167% |
+| 14 | 0.131391 | 0.5980 | 0.0616 | 0.006757 | 1.496 | 2.9398% |
+| 30 | 0.135644 | 0.5929 | 0.0389 | 0.008882 | 1.221 | 3.0324% |
+| 45 | 0.140614 | 0.5847 | 0.0388 | 0.009463 | 1.241 | 3.1713% |
+| 60 | 0.140011 | 0.5789 | 0.0421 | 0.010978 | 1.556 | 3.1250% |
+| 90 | 0.139124 | 0.5850 | 0.0442 | 0.011580 | 1.343 | 3.1019% |
+| 120 | 0.137361 | 0.5718 | 0.0341 | 0.011337 | 0.458 | 3.0324% |
+| 123 | 0.145032 | 0.5742 | 0.0376 | 0.008653 | 0.634 | 3.2870% |
+| 150 | 0.151324 | 0.5663 | 0.0391 | 0.005118 | 0.530 | 3.4954% |
+| 180 | 0.154536 | 0.6008 | 0.0486 | 0.001624 | 1.266 | 3.6574% |
+
+HGB15 has the best seven-day ML Brier (0.024700 vs recovery 0.025164), ROC-AUC
+0.7357 and AP 0.2421, but its paired Brier interval includes zero and its mean
+proper scores are worse overall. LR has better long-horizon ranking than recovery
+at 180 days (AUC .6008 vs .5192), but the absolute Brier gain is only .000139,
+with insufficient independent time clusters. Do not suppress these mixed findings
+or describe them as operational accuracy or confirmed predictive superiority.
+
+Log loss clips probabilities at 1e-15 consistently for all methods; Brier uses raw
+probabilities. AP is tie-aware average precision, not trapezoidal PR integration.
+ECE uses fixed ten bins; ranking ties use the existing 12-decimal convention.
+Low ECE near rare prevalence does not certify individual calibration.
+
+Expected fleet NMCS counts for LR versus recovery, same 160-tail cohorts:
+
+| H | LR expected | Recovery expected | Observed | LR count MAE |
+|---|---:|---:|---:|---:|
+| 7 | 5.792 | 5.226 | 4.667 | 1.647 |
+| 14 | 5.785 | 5.533 | 4.704 | 1.636 |
+| 30 | 6.273 | 5.671 | 4.852 | 1.943 |
+| 45 | 6.588 | 5.710 | 5.074 | 1.886 |
+| 60 | 6.756 | 5.705 | 5.000 | 1.827 |
+| 90 | 6.816 | 5.650 | 4.963 | 2.071 |
+| 120 | 6.666 | 5.666 | 4.852 | 2.429 |
+| 123 | 6.644 | 5.669 | 5.259 | 1.989 |
+| 150 | 6.411 | 5.616 | 5.593 | 1.890 |
+| 180 | 6.112 | 5.606 | 5.852 | 1.836 |
+
+Current-status diagnostics for LR C=1 and recovery:
+
+| H | Group | N/positive | LR Brier | Recovery Brier | LR log loss |
+|---|---|---:|---:|---:|---:|
+| 7 | NMCS | 123/44 | 0.216434 | 0.230536 | 0.621260 |
+| 7 | other | 4197/82 | 0.019228 | 0.019146 | 0.097014 |
+| 180 | NMCS | 123/5 | 0.038816 | 0.038998 | 0.170909 |
+| 180 | other | 4197/153 | 0.034984 | 0.035122 | 0.154056 |
+
+Only five positive outcomes exist in the current-NMCS H=180 group. Its ranking
+metrics are explicitly unsupported/null, not evidence of safety. Complete subgroup
+metrics and calibration coordinates for all seven methods/horizons are in the
+local development_results.json. Supported LR command/platform variation:
+
+| H | Dimension | Supported ranking groups | Brier range | AP range |
+|---|---|---:|---:|---:|
+| 7 | command | 4/4 | 0.012562..0.034114 | 0.0597..0.3248 |
+| 7 | platform | 4/4 | 0.018062..0.028538 | 0.1996..0.2749 |
+| 180 | command | 4/4 | 0.017291..0.053295 | 0.0317..0.0673 |
+| 180 | platform | 4/4 | 0.027709..0.038149 | 0.0475..0.0926 |
+
+## Dependence, interpretation and failure modes
+
+Paired bootstrap compares losses on identical rows, with resampled aircraft and
+reference-time blocks of max(28,H) days, 200 replicates, seed 42017. At least five
+time blocks are required; otherwise intervals are explicitly unavailable. These
+are nominal post-selection development diagnostics, not independent confirmation
+or multiple-comparison-adjusted superiority claims.
+
+| H | LR minus recovery Brier | Time blocks | Paired interval/status |
+|---|---:|---:|---|
+| 7 | -0.000321 | 7 | [-0.001056, 0.000115] |
+| 14 | 0.000065 | 7 | [-0.000720, 0.000512] |
+| 30 | 0.000071 | 7 | [-0.000399, 0.000421] |
+| 45 | 0.000086 | 5 | [-0.000267, 0.000361] |
+| 60 | 0.000156 | 4 | Unsupported: <5 time clusters |
+| 90 | 0.000133 | 3 | Unsupported: <5 time clusters |
+| 120 | 0.000203 | 2 | Unsupported: <5 time clusters |
+| 123 | 0.000114 | 2 | Unsupported: <5 time clusters |
+| 150 | 0.000047 | 2 | Unsupported: <5 time clusters |
+| 180 | -0.000139 | 2 | Unsupported: <5 time clusters |
+
+The seven-day LR interval [-.001056, .000115] and HGB15 interval
+[-.001526, .000312] both include zero. At H=180 there are only two time blocks;
+no defensible paired interval is reported. Weekly references, repeated episodes,
+and common horizon outcomes remain correlated. The raw row count is not an
+independent sample-size claim. Independent seeds/tails and final locked testing
+remain necessary; none was substituted for the reserved test here.
+
+LR standardized-numeric/one-hot coefficients: current NMCS +5.9889,
+NMCS x log(H+1) -1.6816, current DEPOT -1.3680, fictional command D -0.8709,
+command B +0.5625. These are conditional associations in a collinear regularized
+encoding, not causal effects or simple standalone odds ratios. Full top coefficients
+are recorded for both LR candidates.
+
+Bounded grouped permutation: 1,600 DEVELOPMENT rows, three repeats per group.
+HGB15 mean Brier increase: command +.000547, NMCS history +.000162, horizon
++.000141; platform -.000080 and state age -.000025. Negative values and variance
+across repeats indicate noise/correlation/instability, not causal irrelevance.
+Derived horizon interactions are recomputed consistently after permutation. No
+feature elimination or extra tuning followed these post-fit explanations.
+
+Limitations: one fictional stationary world; artificial command profiles and
+platform allocations; current assignments rather than historical transfers; left-
+truncated early history; no inspection/phase features; dataset age is not aircraft
+age; training priors and validation prevalence differ; sparse current-NMCS subgroup;
+long-horizon dependence. Do not infer operational performance from these results.
+
+## Artifacts, actual execution and verification
+
+Local ignored evidence: .harness-test-tmp/phase05b-ml-development-v2/.
+The pre-fit plan fixes sampling, configs and criteria with source/runtime/data
+hashes before fitting. Manifest lists hashes of four newly fitted pipeline joblibs,
+plan, prediction CSV, metrics and frozen provisional configuration. Models are
+NOT promoted and are not included in Git. Future loads require trusted provenance
+and manifest verification; no general untrusted loader was introduced.
+
+Development manifest SHA-256: `689b0f5e8a5d5bc100f090bb5820125a83c0fdcda10d4b0ee4b8990ee368c938`.
+
+- hgb-15.joblib: `a0f86f166b1f6d2f10de881dc0a0aac9034c6494463a239af1cfbc490765cfd9`
+- hgb-7.joblib: `b5720b5649329e346876591a2030a76a01d978b87e2f877ffdae62837b16f111`
+- lr-c01.joblib: `a2319c8075b148fb03c6973816089a50b8f5740482affac71b655bfd1bbe8746`
+- lr-c1.joblib: `6d95dc923cfda7224602faeafa68a0a7e6962a29bae0315158c907d4b1060453`
+
+Source revision e087d3e plus exact working-source hashes is recorded; new training
+code is not falsely claimed to exist in that published revision. Runtime remains
+Python 3.13.7, sklearn 1.9.1, SciPy 1.18.1, NumPy 2.3.4, pandas 2.3.3,
+joblib 1.6.0, threadpoolctl 3.8.0 and the previously qualified supporting pins.
+No new downloads/installations. The application .venv and production pins remain
+unchanged; this is Windows development evidence, not Linux or offline-package
+acceptance. Later inference packaging/memory/cold-start gates remain required.
+
+Actual command:
+
+```powershell
+.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B scripts/train_nmcs_development.py --experiment phase05b-ml-development-v2
+```
+
+Exit 0; 53.258 s feature preparation, 120.386 s total recorded run. Four fixed
+candidate fits completed; LR 168/183 iterations, trees fixed 150. No uncontrolled
+search. An initial v1 attempt was stopped after preparation when a misplaced
+pandas import was noticed; no model results from it were selected or reused. Its
+plan/log/status are preserved. The import-only correction did not alter candidate
+settings, sampler, criteria or data. No dataset was regenerated.
+
+Focused isolated suite: 14/14 PASS, 4.068 s. It proves cutoff isolation including
+future-global-end truncation, horizon/label alignment, missingness/encoding guards,
+current-NMCS/NMCM targets, deterministic tiny-fixture fits, probability/schema
+validity and refusal to construct calibration/test batches. Full-size training
+was not repeated to manufacture bit-for-bit evidence; exact source/seed/configs,
+artifacts and deterministic fixture checks are recorded. Native cross-platform
+bitwise reproducibility is not claimed.
+
+Existing foundation 41/41 PASS (0.777 s); protected readiness 28/28 PASS (1.067 s).
+Application portable: 229 tests, 0 failures/errors, **8 new isolated-estimator-only
+skips** (128.734 s): 221 passed. All eight skipped tests executed successfully in
+the isolated 14-test suite. Original 215 portable tests remain passing; five
+external-reference cases remain separate. Commands/security disposition and exact
+file inventory are recorded in PROJECT_STATE.md. No frontend/build suites rerun.
+
+**Recommendation:** retain persistence_recovery; no ML champion or promotion.
+Do not proceed automatically to calibration as if ML superiority were established.
+If the chief architect separately authorizes diagnostic calibration research,
+freeze lr-c1 exactly as recorded and compare calibrated probabilities with the
+unchanged baseline; do not tune on or inspect the locked test. This is a research
+option, not a GO decision. Phase 05C remains NO-GO. No calibration, locked test,
+commit, push, PR #16 modification, merge or deployment occurred in this task.
+
+---
+
+## Historical preparation checkpoint (dependency status superseded)
+
+The previous report follows unchanged for historical evidence. Its package-blocker
+status is superseded by runtime qualification and this development update. Its
+full-world descriptive preparation statistics were not decoded by ML training or
+used for selection; calibration/locked outcomes remain reserved in this stage.
+
 # Phase 05B preparation and empirical development report
 
 Recorded 2026-11-24 (Asia/Dubai). **PARTIAL / DEPENDENCY BLOCKED; NO-GO for Phase 05C.**

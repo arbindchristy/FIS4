@@ -1,5 +1,20 @@
 # FIS4 task backlog
 
+## Phase 05B closure and intranet qualification
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The one-time fictional locked
+test is complete and the holdout is spent. Recovery gained 9.44% in seven-day
+Brier versus historical occupancy, but bias and subgroup support blocked PASS.
+The 30-day gain was about 0.14%, below the 2% criterion. Longer offsets have
+insufficient evidence for validation. Raw persistence_recovery remains primary,
+and raw lr-c1 remains the sole frozen ML comparator.
+
+Next review the real-data qualification contract and request separate intranet
+operator authorization for metadata and aggregate profiling. Physical mappings,
+as-of history, carry, assignments, hours and independent validation remain open.
+No operational training or integration is authorized by this document.
+
+
 ## Phase 05B calibration checkpoint
 
 - Protocol v1.1 frozen and calibration diagnostics complete. Forward-fold time

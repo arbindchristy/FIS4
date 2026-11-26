@@ -1,5 +1,22 @@
 # FIS4 project state
 
+## Phase 05B locked-test closure
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The one-time fictional locked
+test is complete and the holdout is spent. Recovery gained 9.44% in seven-day
+Brier versus historical occupancy, but bias and subgroup support blocked PASS.
+The 30-day gain was about 0.14%, below the 2% criterion. Longer offsets have
+insufficient evidence for validation. Raw persistence_recovery remains primary,
+and raw lr-c1 remains the sole frozen ML comparator.
+
+The previously proposed command below is historical and must not be rerun.
+All five local evidence hashes verified. Manifest SHA-256
+`4edca4c03cb1cccdeb1d6b295690967a7091daba08a5e0eae194026ee236fd5f`;
+report SHA-256 `ba7e344e236f9eb7b2d0136a85da8e3c85f00bdf64da75fafeb89aba10a09b67`.
+See [locked results](NMCS_MODELING.md) and the proposed
+[real-data qualification contract](NMCS_REAL_DATA_QUALIFICATION.md).
+
+
 ## Phase 05B locked evaluator preparation (protocol v1.1)
 
 Seven fixture and seal checks passed in the qualified scientific environment.

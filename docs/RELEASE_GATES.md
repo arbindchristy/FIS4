@@ -1,5 +1,20 @@
 # FIS4 release gates
 
+## Phase 05B final fictional decision
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The one-time fictional locked
+test is complete and the holdout is spent. Recovery gained 9.44% in seven-day
+Brier versus historical occupancy, but bias and subgroup support blocked PASS.
+The 30-day gain was about 0.14%, below the 2% criterion. Longer offsets have
+insufficient evidence for validation. Raw persistence_recovery remains primary,
+and raw lr-c1 remains the sole frozen ML comparator.
+
+The historical pending gates below are superseded. A future operational decision
+requires signed physical source qualification and independently validated
+temporal evidence under the [real-data contract](NMCS_REAL_DATA_QUALIFICATION.md).
+No repeat evaluation of the fictional holdout. No Phase 05C release.
+
+
 ## Phase 05B calibration gate v1.1
 
 - Keep raw recovery primary and raw lr-c1 comparator. No sigmoid fit because

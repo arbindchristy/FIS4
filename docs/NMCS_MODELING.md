@@ -1,3 +1,48 @@
+## Phase 05B fictional locked-test closeout
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The authorized one-time Protocol
+v1.1 run completed at ba2d5996f9cffdfed38c0ddeeb419367a9731d3a. Neither
+primary horizon qualified. Raw persistence_recovery remains the primary empirical
+baseline. Raw lr-c1 remains the sole frozen ML comparator. No model promotion.
+
+Each horizon used the same 4,320 tail/date pairs (160 fictional tails, 27 dates).
+The common purge excluded 4,160 pairs, with zero ineligible references or missing
+targets. Seven-day recovery Brier improved 9.44% versus historical occupancy.
+Its paired Brier interval was [-0.006514, -0.000519], but the current-NMCS subgroup
+had +5.65 percentage-point bias (limit 3), and fictional Command D had 12 positives
+(minimum 20). At 30 days the gain was about 0.14% (minimum 2%), the paired
+interval crossed zero [-0.000156, +0.000078], and current NMCS and Command D had
+only 9 and 13 positives. Both primary horizons passed overall log-loss and
+reliability guards and neither triggered material overall harm. Secondary
+horizons are descriptive. At 14 days the paired Brier interval crossed zero.
+At 45-180 days only 1-4 qualifying time blocks were available, below the
+six-block requirement. These results do not validate longer horizons.
+
+Verified local evidence SHA-256:
+
+- Manifest: `4edca4c03cb1cccdeb1d6b295690967a7091daba08a5e0eae194026ee236fd5f`
+- Report: `ba7e344e236f9eb7b2d0136a85da8e3c85f00bdf64da75fafeb89aba10a09b67`
+
+All five evidence files matched the manifest. Aircraft-level rows, model binaries,
+authorization records and executable freezes remain local. The locked set is
+spent. The protocol and hashes below describe the historical frozen execution,
+not a new execution authorization or a freeze for this documentation revision.
+
+| Days | Recovery Brier / log loss | Occupancy | Transition | Raw lr-c1 |
+|---:|---:|---:|---:|---:|
+| 7 | 0.030937 / 0.130885 | 0.034162 / 0.153095 | 0.031495 / 0.132469 | 0.030573 / 0.132006 |
+| 14 | 0.033894 / 0.150547 | 0.033947 / 0.152331 | 0.034739 / 0.154000 | 0.034362 / 0.151207 |
+| 30 | 0.032825 / 0.147537 | 0.032873 / 0.148514 | 0.032802 / 0.147213 | 0.032785 / 0.146038 |
+| 45 | 0.036957 / 0.163076 | 0.036957 / 0.163019 | 0.036951 / 0.162985 | 0.036730 / 0.159098 |
+| 60 | 0.039974 / 0.173826 | 0.039967 / 0.173706 | 0.039959 / 0.173611 | 0.039656 / 0.169234 |
+| 90 | 0.038896 / 0.169969 | 0.038892 / 0.169889 | 0.038888 / 0.169832 | 0.038647 / 0.165633 |
+| 120 | 0.041892 / 0.180458 | 0.041902 / 0.180577 | 0.041908 / 0.180676 | 0.041564 / 0.175542 |
+| 123 | 0.043617 / 0.186648 | 0.043621 / 0.186684 | 0.043625 / 0.186739 | 0.043260 / 0.181298 |
+| 150 | 0.046008 / 0.195410 | 0.045986 / 0.195081 | 0.045987 / 0.195095 | 0.045410 / 0.187928 |
+| 180 | 0.042990 / 0.184622 | 0.042977 / 0.184394 | 0.042976 / 0.184382 | 0.042626 / 0.179890 |
+
+See [real-data qualification](NMCS_REAL_DATA_QUALIFICATION.md) for the separate intranet gate.
+
 # Phase 05B development-validation update - 2026-11-24
 
 **Development completed; retain the empirical recovery baseline. No ML champion,

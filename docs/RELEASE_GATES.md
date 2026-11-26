@@ -1,5 +1,14 @@
 # FIS4 release gates
 
+## Phase 05B calibration gate v1.1
+
+- Keep raw recovery primary and raw lr-c1 comparator. No sigmoid fit because
+  all three forward folds failed the minimum time-block support.
+- A locked horizon without adequate paired uncertainty cannot earn PASS.
+  Require independently reviewed source, fixture tests and verified calibration
+  seal before separately authorizing the one-time locked test. Phase 05C NO-GO.
+
+
 ## Phase 05B development-only acceptance - 2026-11-24
 
 - Qualified isolated Windows runtime reused; no app dependency changes. Dataset/

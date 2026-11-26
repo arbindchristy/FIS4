@@ -1,5 +1,14 @@
 # FIS4 task backlog
 
+## Phase 05B calibration checkpoint
+
+- Protocol v1.1 frozen and calibration diagnostics complete. Forward-fold time
+  support precluded sigmoid fitting; raw recovery and raw lr-c1 are sealed.
+- Next gate: review and freeze a fixture-validated locked evaluator, verify the
+  calibration seal, then obtain separate locked-test authorization. Phase 05C
+  remains NO-GO.
+
+
 ## Phase 05B development checkpoint - 2026-11-24
 
 - Runtime qualification complete; four bounded ML candidates trained on TRAIN only

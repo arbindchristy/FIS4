@@ -1,5 +1,65 @@
 # FIS4 project state
 
+## Phase 05B locked evaluator preparation (protocol v1.1)
+
+Seven fixture and seal checks passed in the qualified scientific environment.
+The protocol and calibration source/artifacts still match their recorded hashes.
+No locked observations were opened or hashed, and no authorization marker or
+execution directory was created. Phase 05C remains NO-GO.
+
+Proposed one-time command, from the repository root after separate approval:
+
+```powershell
+.harness-test-tmp/phase05b-ml-env/Scripts/python.exe -B scripts/evaluate_nmcs_locked.py --freeze-sha256 d002f9890da2a1c04d3e20bd78ee1d3ff76efb1af5484600224316b8b71b7323 --authorization-marker .harness-test-tmp/phase05b-locked-v1.1-authorization.json
+```
+
+The marker is a local review interlock. Only after explicit chief-architect
+approval, create the JSON file at that path with these fields:
+
+```json
+{
+  "authorization": "AUTHORIZE_ONE_TIME_PHASE05B_LOCKED_TEST_V1_1",
+  "freeze_sha256": "d002f9890da2a1c04d3e20bd78ee1d3ff76efb1af5484600224316b8b71b7323",
+  "period": ["2025-11-21", "2026-11-20"],
+  "approval_reference": "<actual approval record and operator>"
+}
+```
+
+Confirm reviewed file hashes against the local freeze manifest. The evaluator
+records authorization and creates an exclusive output directory before reading
+the export. Keep the directory, including a failed attempt, as the replay
+interlock and audit record. Do not retry after outcome exposure. On success the
+directory contains the machine report, cohort keys, predictions and their hashes.
+Unsupported primary horizons are inconclusive and cannot earn PASS. An authorized
+replay could still fail its support or skill gates. Real-data intranet acceptance
+remains separate.
+
+
+## Phase 05B calibration gate (protocol v1.1)
+
+Calibration-only replay completed in the qualified Python 3.13.7 scientific
+environment on feature/05b-nmcs-modeling, based on b3a4419. Raw recovery remains
+primary and raw lr-c1 remains the sole comparator. No sigmoid was fit. The
+three forward assessment folds had 1, 2, and 3 qualifying mixed time blocks at
+each horizon, below the required six qualifying blocks and five mixed blocks.
+The first fold also had just four reference dates, below the required five.
+
+Common full calibration cohort: 7,680 examples per horizon, 160 tails and 48
+reference dates; 800 tail/date pairs purged, zero ineligible or missing. Raw
+recovery at H=7/30 respectively: Brier 0.033657/0.036416, log loss
+0.139669/0.160576, signed bias -0.003220/-0.002118, ECE 0.003220/0.002118.
+These are fictional calibration-period diagnostics. Locked outcomes remain sealed.
+
+Local evidence is under .harness-test-tmp/phase05b-calibration-v1.1.
+Pre-access freeze SHA-256: f8b1274636fe599f7f56057586f6fd9a23ef99c30bc8d82432b097d23739851d.
+Result SHA-256: 8d684bfe868b36c0c6c70d1e425a78060bbed59ccac37960b88dcef9fe273344.
+Seal SHA-256: 595c5c3bd4ad95dc33cc3e729b37b509ae2da6c6244397ac6ff66fe963ac01a3.
+The in-scope observation prefix agreed across two saved exports. The original
+whole-export hash was reused as historical evidence; it was not recomputed
+because the export spans the sealed period. No model deserialization.
+Three fabricated-fixture gate tests passed in the isolated environment.
+
+
 ## Phase 05B ML development validation - 2026-11-24
 
 Authorized training/development only, on feature/05b-nmcs-modeling, HEAD e087d3e;

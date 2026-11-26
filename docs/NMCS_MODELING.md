@@ -300,6 +300,196 @@ commit, push, PR #16 modification, merge or deployment occurred in this task.
 
 ---
 
+## Phase 05B final scientific protocol v1.1
+
+Chief-architect calibration gate on draft PR #16. Phase 05C remains
+NO-GO. Authorization covers calibration only. The locked period remains sealed. Use the published development
+results and the fictional six-year dataset already on disk.
+
+### Frozen methods and endpoint
+
+Primary forecast: unmodified persistence_recovery. Sole ML comparator: frozen
+lr-c1. Historical occupancy and the transition rule remain fixed empirical
+references. Historical occupancy is the sole confirmatory benchmark.
+No reselection, base-model fitting, or preprocessing updates. Predict NMCS
+occupancy exactly T+H, H=7/30 primary; H=14/45/60/90/120/123/150/180 secondary.
+Current NMCS is eligible. Valid NMCM targets are negative. Report all registered
+horizons; no implication for unscored offsets.
+
+### Decision thresholds
+
+Apply these proposed margins as written after approval and before outcome access.
+Loss deltas are forecast minus reference on identical eligible rows. All
+locked acceptance and harm Brier/log-loss margins (including subgroup Brier)
+compare raw recovery against frozen historical occupancy in the same horizon
+and subgroup. Bias and ECE compare each forecast to observed rates in that
+cohort. Transition and ML contrasts report recovery or the named comparator
+explicitly and have no acceptance margins. Use unclipped probabilities for Brier
+and clip to [1e-15, 1-1e-15] for natural-log loss only.
+
+| Gate | Numerical rule |
+|---|---|
+| Material Brier skill | Recovery Brier at least 2% lower than occupancy; one-sided paired 97.5% upper bound on recovery-minus-occupancy Brier strictly below zero |
+| Log-loss guard | Recovery-minus-occupancy log loss <= 0.002 nats per example |
+| Overall reliability | Absolute mean probability minus prevalence <= 0.010 and ten-bin equal-width ECE <= 0.015 |
+| Subgroup guard | For each required supported subgroup, absolute mean probability minus prevalence <= 0.030 and recovery-minus-occupancy Brier <= 0.005 |
+| Overall support | >=1,000 rows, >=50 positives and >=50 negatives, >=100 distinct tails and >=20 reference dates per horizon |
+| Subgroup support | >=100 rows, >=20 positives and >=20 negatives, >=20 distinct tails and >=10 reference dates per horizon |
+| Material overall harm | Recovery Brier at least 5% above occupancy, log-loss excess >0.010, absolute mean bias >0.030, or ECE >0.040 on a supported primary horizon |
+
+Required subgroups are current NMCS versus other, each command, and each
+platform in the frozen fictional roster. Report denominators and exclusion
+counts. Below support, retain descriptive counts and mark subgroup ranking,
+reliability and acceptance as unsupported. Use the existing twelve-decimal
+ranking tie convention. Report ROC-AUC, average precision, prevalence, top-decile
+lift and expected/observed NMCS counts and count MAE by reference date. Use bins
+[0,.1), [.1,.2), ..., [.9,1], counting empty bins as zero weight. Report counts
+and mean predicted/observed rates per bin; bins with fewer than 50 rows or five
+positives are descriptive only. Ranking is descriptive and cannot override a
+proper-score or reliability failure.
+
+Two one-sided primary Brier claims form one family, each tested at alpha .025
+(Bonferroni family alpha .05). Report both regardless of support. An unsupported
+claim does not recycle alpha. Secondary horizons, ML contrasts and subgroup
+diagnostics are descriptive and cannot qualify a horizon. The 2% and guard
+margins are point-estimate gates in addition to the Brier uncertainty gate.
+
+### Optional comparator calibration
+
+Recovery stays raw. Authorize only one diagnostic recalibration of lr-c1.
+Fit one shared sigmoid p'=sigmoid(a+b*logit(clip(p,1e-6,1-1e-6))) with an
+intercept, unweighted Bernoulli log loss and no tuning. Require a finite,
+converged fit with strictly positive slope; reject separation or fit failure.
+Pool the 7- and 30-day cohorts with equal total weight per horizon for fitting
+and evaluation. Apply any accepted mapping only to 7 and 30 days. All secondary
+comparator forecasts remain raw. Always report raw lr-c1 alongside any accepted
+variant.
+
+Anchor weekly dates on 2024-11-21. Use expanding fits from that date with these
+inclusive fit-outcome cutoffs and assessment reference windows:
+
+| Fit outcome cutoff | Assessment references |
+|---|---|
+| 2025-02-28 | 2025-03-01 through 2025-04-30 |
+| 2025-04-30 | 2025-05-01 through 2025-07-31 |
+| 2025-07-31 | 2025-08-01 through 2025-11-20 |
+
+For each fit, require both primary outcomes by its cutoff; for each assessment,
+require both by the end of its window. Use common tails/dates across the two
+offsets, following the eligibility rules below. Require per horizon per fit
+>=500 rows and >=25 outcomes of each class. Require per horizon per assessment
+>=300 rows and >=10 of each class, and >=5 reference dates. Any unsupported fold
+or invalid output defaults to raw lr-c1; no combining folds or changing windows.
+Before any sigmoid fit, every assessment fold must support at least six
+nonoverlapping 30-day reference blocks with at least three eligible dates each,
+and at least five of those blocks must contain both classes at each primary
+horizon. Anchor blocks at the assessment window start. These counts are minimum
+proxies for independent time support. Failure of even the calendar upper bound
+precludes fitting. Assess raw recovery over the full eligible calibration period
+using the common 30-day purge, with no acceptance claim from calibration metrics.
+On concatenated out-of-fold predictions require equal-horizon mean log loss at
+least 1% lower than raw, Brier excess <=0.0002 and ECE excess <=0.002 at each
+primary horizon, and pooled mean log-loss excess versus raw lr-c1 <= 0.000000000001 nats per
+example in each individual fold (floating-point tolerance only). Every
+calibration improvement or excess above compares calibrated with raw lr-c1 on
+the identical rows. The Brier and ECE excesses are absolute differences.
+If all pass, refit the same two coefficients once using all eligible
+calibration references/outcomes through 2025-11-20 (same fit support minimum).
+Seal coefficients, fit diagnostics and the raw/calibrated choice before test
+access. A failed final fit defaults to raw. Calibration findings do not change
+the primary forecast or selection.
+
+### Single locked replay
+
+Anchor a seven-calendar-day reference grid on 2025-11-21 and retain dates
+through 2026-11-20 minus 180 days, inclusive. Use the frozen synthetic projection
+and Phase 05A reference eligibility and validated reconstruction at the
+relevant outcome cutoff. Preserve leading zeros. Build features from history
+through the reference day only, including permitted earlier-period history.
+Require a valid exact-date target at all ten offsets for each eligible tail and
+reference. Unavailable or unvalidated targets are missing; never encode them as
+negative. Apply the equivalent common-target rule for the two calibration
+offsets. Sort by reference date, tail and horizon. Record counts by horizon and
+group and mutually exclusive exclusions in this order: calendar purge,
+ineligible reference, missing/unvalidated target. Source corruption, duplicate
+cohort keys, invalid predictions, or method row mismatches stop the run;
+method-specific row removal is forbidden. Check leakage and cohort equality
+before scoring. Save hashed cohort keys, predictions, exclusions, results and
+execution log locally. Run all registered metrics in one authorized execution,
+with no outcome-informed retries, thresholds, subgroup pooling or corrections.
+An aborted run after outcome access consumes the blind holdout for any
+outcome-informed repair; obtain a new independent holdout in that case.
+
+### Paired uncertainty and decisions
+
+For each contrast and horizon compute paired row loss differences. Use
+nonoverlapping calendar blocks of max(28,H) days anchored at the first locked
+reference. Independently resample the distinct aircraft and nonempty blocks
+with replacement, drawing the original number from each dimension. Weight
+each observed row by the product of its aircraft and block multiplicities.
+Compute weighted mean deltas for Brier and log loss. Use 10,000 draws, Python
+random.Random seed 42017 reset per horizon and contrast, sorted sampling keys,
+identical draws for both losses, and linear-interpolated percentile bounds.
+Skip zero-weight draws. Report two-sided 95% descriptive intervals and the
+97.5th-percentile upper Brier bound for the primary gate. Suppress intervals
+unless overall support passes, >=6 blocks each contain >=3 reference dates,
+>=5 of those qualifying blocks contain at least one positive and one negative,
+and >=9,500 draws
+have nonzero weight. Resampling accounts for crossed dependence approximately;
+it cannot substitute for independent fleets or calendar periods. If any support
+condition fails, the interval is unavailable and the horizon cannot earn PASS.
+
+- **Fictional limited-horizon PASS** requires at least one supported primary
+  horizon to pass every skill, uncertainty, reliability and subgroup gate and
+  no material overall harm on either supported primary horizon. Name only
+  qualifying horizons. A missing required subgroup blocks PASS for its horizon.
+- **Exploratory only** applies if neither primary horizon qualifies and there
+  is a >=2% Brier point gain on a primary horizon meeting overall support, with
+  no material overall harm, but at least one acceptance gate fails.
+- **NO-GO** applies for integrity/leakage failures, material overall harm on
+  either supported primary horizon, or absence of even the exploratory evidence.
+  No decision promotes lr-c1 or changes the Phase 05C gate.
+
+### Freeze and access checklist
+
+1. Obtain approval of this protocol and separate explicit authorization for
+   reserved access. Log operators, inputs, partitions and allowed actions.
+2. Record SHA-256 for this approved text, exact evaluation source, its tests,
+   frozen feature/cohort sources, dependency/runtime lock, dataset and empirical
+   artifacts and lr-c1 artifact. Bind these to a reviewed Git revision and the
+   published development manifest (689b0f5e8a5d5bc100f090bb5820125a83c0fdcda10d4b0ee4b8990ee368c938)
+   and dataset manifest (ff827565c2809bee36681456630155f99aa8ecad42dc5dcd78c4ad1c9bda089b).
+   Hashes must match trusted manifests. Audit provenance before any separately
+   authorized model load. Never load legacy models. Dry-run evaluator and failure
+   cases with small fabricated fixtures only; the existing development runner
+   deliberately rejects reserved partitions.
+3. First reserved access includes parsing calibration statuses as covariates or
+   labels, reconstructing snapshots, determining eligibility/exclusions/support,
+   generating probabilities from those covariates, fitting sigmoid coefficients
+   and inspecting assessment metrics or intermediate rows. Authorize and log
+   these together. Restrict the loader to the calibration cutoff. Keep raw
+   records, intermediate output and model artifacts local. Do not open older
+   full-world coverage reports, which may expose reserved outcome summaries.
+4. Seal and hash the calibration decision, coefficients if any, ordered input
+   schema, evaluator and report format. Independently verify freezes before
+   authorizing the single test run. First locked access includes parsing locked
+   statuses even for features, reconstruction, eligibility/support counting,
+   target extraction, scoring and inspecting outputs. Release results together
+   after the run. Log any exposure, failure or deviation and suspend acceptance
+   until independently reviewed.
+
+The common 180-day purge leaves 27 scheduled locked references before eligibility
+checks. Long horizons cannot meet the interval rule within that calendar.
+Rare positives may also block subgroup or fold support. Overlapping
+outcomes, repeated tails and one fictional world limit generalization. Missing
+inspection and phase hours and limited historical depth constrain transfer.
+Operational release still requires approved intranet source mappings, validated
+as-of availability and reconstruction, representative real coverage, independent
+temporal reliability and subgroup validation, customer-approved operating
+thresholds, and Linux/Windows offline runtime, memory and release acceptance.
+
+---
+
 ## Historical preparation checkpoint (dependency status superseded)
 
 The previous report follows unchanged for historical evidence. Its package-blocker

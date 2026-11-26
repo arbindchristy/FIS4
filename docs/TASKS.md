@@ -1,5 +1,59 @@
 # FIS4 task backlog
 
+## Phase 05B closure and intranet qualification
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The one-time fictional locked
+test is complete and the holdout is spent. Recovery gained 9.44% in seven-day
+Brier versus historical occupancy, but bias and subgroup support blocked PASS.
+The 30-day gain was about 0.14%, below the 2% criterion. Longer offsets have
+insufficient evidence for validation. Raw persistence_recovery remains primary,
+and raw lr-c1 remains the sole frozen ML comparator.
+
+Next review the real-data qualification contract and request separate intranet
+operator authorization for metadata and aggregate profiling. Physical mappings,
+as-of history, carry, assignments, hours and independent validation remain open.
+No operational training or integration is authorized by this document.
+
+
+## Phase 05B calibration checkpoint
+
+- Protocol v1.1 frozen and calibration diagnostics complete. Forward-fold time
+  support precluded sigmoid fitting; raw recovery and raw lr-c1 are sealed.
+- Next gate: review and freeze a fixture-validated locked evaluator, verify the
+  calibration seal, then obtain separate locked-test authorization. Phase 05C
+  remains NO-GO.
+
+
+## Phase 05B development checkpoint - 2026-11-24
+
+- Runtime qualification complete; four bounded ML candidates trained on TRAIN only
+  and compared on the existing common DEVELOPMENT cohort. No dependency changes.
+- Development completed: 208800 training / 43200 development rows, 14 isolated tests,
+  41 foundation, 28 readiness; portable 221 passed/eight isolated-only skips.
+- Negative result: no credible incremental ML advantage; retain recovery baseline.
+  LR C=1 is frozen point-best ML for reproducibility only, not a promoted champion.
+- Calibration/test remain RESERVED/NOT RUN. No automatic next stage; optional
+  diagnostic calibration requires separate authorization. Phase 05C NO-GO.
+- Local source/report/evidence await chief review. No commit/push/PR #16 change.
+  Full measured comparisons, feature interpretation and hashes: NMCS_MODELING.md.
+
+
+## Phase 05B preparation checkpoint - 2026-11-24
+
+- Done: separate six-year fictional world, observed-only coverage/episode/feature
+  assessment; empirical occupancy/recovery/transition baselines; purged development
+  replay and uncertainty/metric/artifact preparation; 19 new focused tests.
+- BLOCKED: scikit-learn/SciPy/joblib/threadpoolctl absent; no modeling environment
+  or offline wheel bundle. Logistic/boosted candidates and calibration/locked-test
+  scientific acceptance NOT RUN. No installations or legacy model loading.
+- NO-GO Phase 05C; Phase 05B scientific acceptance remains incomplete. A clearly
+  marked preparation-only PR may be published after code/security checks pass;
+  it does not accept the missing ML work. Ignored evidence remains local.
+- Next: separately approve a pinned scientific environment, then candidate training,
+  preprocessing/calibration and locked evaluation. No inference/API/frontend/Render
+  work. Actual results and manifest: NMCS_MODELING.md and PROJECT_STATE.md.
+
+
 ## PR #15 review corrections - 2026-11-24
 
 - Fixed shared as-of reference eligibility for labels, coverage and features;

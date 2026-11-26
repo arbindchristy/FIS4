@@ -1,5 +1,74 @@
 # FIS4 release gates
 
+## Phase 05B final fictional decision
+
+**EXPLORATORY ONLY. Phase 05C remains NO-GO.** The one-time fictional locked
+test is complete and the holdout is spent. Recovery gained 9.44% in seven-day
+Brier versus historical occupancy, but bias and subgroup support blocked PASS.
+The 30-day gain was about 0.14%, below the 2% criterion. Longer offsets have
+insufficient evidence for validation. Raw persistence_recovery remains primary,
+and raw lr-c1 remains the sole frozen ML comparator.
+
+The historical pending gates below are superseded. A future operational decision
+requires signed physical source qualification and independently validated
+temporal evidence under the [real-data contract](NMCS_REAL_DATA_QUALIFICATION.md).
+No repeat evaluation of the fictional holdout. No Phase 05C release.
+
+
+## Phase 05B calibration gate v1.1
+
+- Keep raw recovery primary and raw lr-c1 comparator. No sigmoid fit because
+  all three forward folds failed the minimum time-block support.
+- A locked horizon without adequate paired uncertainty cannot earn PASS.
+  Require independently reviewed source, fixture tests and verified calibration
+  seal before separately authorizing the one-time locked test. Phase 05C NO-GO.
+
+
+## Phase 05B development-only acceptance - 2026-11-24
+
+- Qualified isolated Windows runtime reused; no app dependency changes. Dataset/
+  artifact hashes checked; no generation, baseline refit or untrusted model load.
+- Training outcomes <=2023-11-20, development outcomes <=2024-11-20. Reserved
+  statuses filtered before Observation construction; calibration/test outcomes,
+  prevalence and performance NOT INSPECTED. No fit on development or later data.
+- Fixed four-candidate plan, train-only missingness/encoding/scaling, all H=1..180,
+  exact-date NMCS labels and identical published development cohorts required.
+- Focused 14/14 isolated, 41/41 foundation, 28/28 readiness PASS; portable 229 run,
+  221 passed/eight new isolated-only skips, all executed in isolated suite. Actual
+  security, provenance, commands and interpretation recorded in PROJECT_STATE.md.
+- Criteria fail: point-best LR C=1 is worse than recovery in mean Brier/log loss;
+  no credible general ML superiority. Retain empirical baseline. Short-horizon
+  hints or unsupported long-horizon intervals do not justify promotion.
+- Frozen LR config is reproducibility evidence only. Calibration and locked test
+  require separate authorization; Phase 05C remains NO-GO. No publication authorized
+  for this update, no PR status change, merge, deployment or inference endpoint.
+- FIS-001/FIS-002/FIS-003, readiness/API/simulator/frontend/SQL/Render and all
+  production dependency pins remain unchanged. Actual operational and Linux/
+  offline-package acceptance remain separate unverified gates.
+
+
+## Phase 05B preparation / scientific-acceptance gate - 2026-11-24
+
+- Partial preparation only: verified merged Phase 05A baseline; separate six-year
+  fictional dataset, empirical baselines and development replay. Preserve the
+  four-year dashboard world, formulas, APIs, simulator algorithm and app dependencies.
+- Missing scientific dependencies block logistic/boosted ML candidates. No substitute
+  performance, accuracy, calibrated-ML or training success may be claimed. Follow
+  the explicit dependency fallback: no silent installs; no model artifact execution.
+- Calibration and final chronological test remain reserved. Common validation
+  references, purged target boundaries and train-only counts are required; tail/time
+  overlap limits statistical independence. A marginal interval is not paired skill.
+- Full Phase 05B scientific acceptance / Phase 05C: NO-GO until actual ML comparisons beat the
+  strongest baseline with meaningful independent evidence, calibration and locked
+  testing complete. Long-horizon baseline improvement here is negligible.
+- Feature/source/provenance manifests and tests in NMCS_MODELING.md; actual focused,
+  protected, portable/security evidence in PROJECT_STATE.md. New dependencies need
+  separate modeling-environment/wheel approval; Windows/Linux compatibility and later
+  offline-package/Render memory/cold-start/functional gates remain unverified.
+- A preparation-only review PR may follow successful code/security checks without
+  claiming full ML completion. No merge, deployment or dependency installation.
+
+
 ## PR #15 correction acceptance - 2026-11-24
 
 - Labels, coverage and features must share as-of reference eligibility; a future

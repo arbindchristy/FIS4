@@ -17,7 +17,7 @@ class CalibrationGateTests(unittest.TestCase):
     def test_reader_stops_before_locked_payload(self):
         row = b'2025-11-20T20:00:00,00001,NMCS,Fictional,UH-60L\n'
         data = gate.HEADER + row
-        with tempfile.TemporaryDirectory(dir=gate.TMP) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'events.csv'
             path.write_bytes(data + b'2025-11-21\xff')
             records, fingerprint = gate.prefix(path, gate.END)

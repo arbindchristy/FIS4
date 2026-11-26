@@ -14,11 +14,60 @@ def observation(day, status):
 
 
 class LockedEvaluatorTests(unittest.TestCase):
-    def test_frozen_calibration_seal(self):
-        locked.verify_calibration()
+    def test_fabricated_calibration_seal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            evidence = root / 'phase05b-calibration-v1.1'
+            evidence.mkdir()
+
+            def write(path, payload):
+                path.write_bytes(locked.canonical_bytes(payload))
+                return locked.digest(path)
+
+            source = root / 'frozen-source.txt'
+            source.write_text('fabricated source', encoding='utf-8')
+            freeze_hash = write(root / 'phase05b-calibration-v1.1-freeze.json', {
+                'source_sha256': {source.name: locked.digest(source)},
+            })
+            result_path = evidence / 'result.json'
+            result = {
+                'locked_test': 'NOT_RUN', 'primary': locked.RECOVERY,
+                'comparator': 'lr-c1_raw', 'protocol_freeze_sha256': freeze_hash,
+            }
+            access_path = evidence / 'access.json'
+            seal = {
+                'comparator': 'lr-c1_raw', 'coefficients': None, 'freeze_sha256': freeze_hash,
+                'result_sha256': write(result_path, result),
+                'access_sha256': write(access_path, {'freeze_sha256': freeze_hash}),
+            }
+            seal_path = evidence / 'seal.json'
+            seal_hash = write(seal_path, seal)
+            with (patch.object(locked, 'ROOT', root), patch.object(locked, 'TMP', root),
+                  patch.object(locked, 'CAL_FREEZE', freeze_hash),
+                  patch.object(locked, 'SEAL', seal_hash)):
+                locked.verify_calibration()
+
+                source.write_text('altered source', encoding='utf-8')
+                with self.assertRaisesRegex(ValueError, 'Calibration-frozen source changed'):
+                    locked.verify_calibration()
+                source.write_text('fabricated source', encoding='utf-8')
+
+                access_path.unlink()
+                with self.assertRaises(FileNotFoundError):
+                    locked.verify_calibration()
+                write(access_path, {'freeze_sha256': freeze_hash})
+
+                inconsistent = {**result, 'locked_test': 'RUN'}
+                result_hash = write(result_path, inconsistent)
+                with self.assertRaisesRegex(ValueError, 'Hash mismatch'):
+                    locked.verify_calibration()
+                inconsistent_seal = write(seal_path, {**seal, 'result_sha256': result_hash})
+                with patch.object(locked, 'SEAL', inconsistent_seal):
+                    with self.assertRaisesRegex(ValueError, 'inconsistent'):
+                        locked.verify_calibration()
 
     def test_marker_and_hash_fail_closed(self):
-        with tempfile.TemporaryDirectory(dir=locked.TMP) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             marker = Path(folder) / 'marker.json'
             with self.assertRaises(FileNotFoundError):
                 locked.require_authorization(marker, 'reviewed')
@@ -29,7 +78,7 @@ class LockedEvaluatorTests(unittest.TestCase):
                 locked.verified_json(marker, 'wrong')
 
     def test_main_rejects_bad_authorization_before_artifact_access(self):
-        with tempfile.TemporaryDirectory(dir=locked.TMP) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             freeze = root / 'phase05b-locked-v1.1-execution-freeze.json'
             freeze.write_text(json.dumps({

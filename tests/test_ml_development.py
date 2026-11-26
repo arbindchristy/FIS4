@@ -14,7 +14,6 @@ from prediction.ml_development import (load_observations,development_section,sam
     feature_row,COLUMNS,CANDIDATES,SELECTION,make_batch,audit_batch,fit_candidate,predict,score,
     paired_brier_interval,Batch,HORIZONS)
 
-ROOT=Path(__file__).resolve().parents[1]
 START=default_periods()[0].start
 STATES=('FMC','NMCS','NMCS','NMCM','FMC','PMCM','PMCS','DEPOT')
 
@@ -31,7 +30,7 @@ def history(extra=()):
 
 class DevelopmentBoundaryTests(unittest.TestCase):
     def test_reserved_outcomes_filtered_before_validation(self):
-        with tempfile.TemporaryDirectory(dir=ROOT/'.harness-test-tmp') as name:
+        with tempfile.TemporaryDirectory() as name:
             path=Path(name)/'events.csv'
             with path.open('w',newline='',encoding='utf-8') as f:
                 writer=csv.writer(f);writer.writerow(['date','tail','status','command','platform'])
@@ -42,7 +41,7 @@ class DevelopmentBoundaryTests(unittest.TestCase):
             with self.assertRaises(ValueError):load_observations(path,date(2025,1,1))
 
     def test_decode_only_development_section(self):
-        with tempfile.TemporaryDirectory(dir=ROOT/'.harness-test-tmp') as name:
+        with tempfile.TemporaryDirectory() as name:
             path=Path(name)/'report.json'
             # Invalid JSON after the allowed object proves it is never decoded.
             path.write_text('{"development_replay":{"kind":"model_development_validation_only","n":3}, UNREAD_RESERVED',encoding='utf-8')
